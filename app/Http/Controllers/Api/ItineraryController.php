@@ -34,10 +34,11 @@ class ItineraryController extends Controller
             ->with([
                 'serviceType:id,name,slug',
                 'destination:id,name,slug,region',
-                'filters:id,type,key,label',
             ])
-            ->withCount('days')
-            ->published();
+            ->published()
+            ->orderBy('is_featured', 'desc') // Featured first
+            ->orderBy('display_order')
+            ->orderBy('published_at', 'desc');
 
         if ($validated['service'] ?? false) {
             $query->where('service_type_id', $validated['service']);
@@ -98,9 +99,6 @@ class ItineraryController extends Controller
             ->with([
                 'serviceType:id,name,slug',
                 'destination:id,name,slug,region,map_embed_url',
-                'days',
-                'filters:id,type,key,label',
-                'media',
             ])
             ->where('slug', $slug)
             ->published()

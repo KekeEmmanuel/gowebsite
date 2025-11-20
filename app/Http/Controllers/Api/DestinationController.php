@@ -14,7 +14,7 @@ class DestinationController extends Controller
     {
         $validated = $request->validate([
             'region' => ['nullable', 'string'],
-            'featured' => ['nullable', 'boolean'],
+            'featured' => ['nullable'],
             'search' => ['nullable', 'string', 'max:120'],
             'per_page' => ['nullable', 'integer', 'between:1,50'],
         ]);
@@ -22,16 +22,21 @@ class DestinationController extends Controller
         $perPage = $validated['per_page'] ?? 20;
 
         $query = Destination::query()
-            ->with('media')
             ->published()
+            ->orderBy('display_order')
             ->orderBy('name');
 
         if ($validated['region'] ?? false) {
             $query->where('region', $validated['region']);
         }
 
-        if (array_key_exists('featured', $validated)) {
-            $query->where('is_featured', (bool) $validated['featured']);
+        // Handle featured parameter - can be string 'true'/'false' or boolean
+        if ($request->has('featured')) {
+            $featuredValue = $request->input('featured');
+            $isFeatured = filter_var($featuredValue, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($isFeatured !== null) {
+                $query->where('is_featured', $isFeatured);
+            }
         }
 
         if ($validated['search'] ?? false) {
@@ -53,11 +58,10 @@ class DestinationController extends Controller
     {
         $destination = Destination::query()
             ->with([
-                'media',
                 'itineraries' => function ($query) {
                     $query
                         ->published()
-                        ->with(['serviceType:id,name,slug', 'media'])
+                        ->with(['serviceType:id,name,slug'])
                         ->limit(6);
                 },
             ])

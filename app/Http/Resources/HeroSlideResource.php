@@ -14,24 +14,23 @@ class HeroSlideResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Use base64 image if available, otherwise fallback to media library
+        $imageUrl = $this->image_base64;
+        
+        if (!$imageUrl && ($this->relationLoaded('media') || $this->hasMedia('slide'))) {
+            $imageUrl = $this->getFirstMediaUrl('slide') ?: $this->getFirstMediaUrl('slide', 'hero');
+        }
+
         return [
             'id' => $this->id,
+            'label' => $this->label ?? $this->subtitle,
             'title' => $this->title,
-            'subtitle' => $this->subtitle,
-            'cta_label' => $this->cta_label,
-            'cta_url' => $this->cta_url,
+            'description' => $this->description ?? $this->subtitle,
+            'ctaLabel' => $this->cta_label,
+            'ctaHref' => $this->cta_url,
+            'image' => $imageUrl,
             'position' => $this->position,
             'is_active' => $this->is_active,
-            'schedule_start' => optional($this->schedule_start)->toISOString(),
-            'schedule_end' => optional($this->schedule_end)->toISOString(),
-            'image' => $this->when(
-                $this->relationLoaded('media') || $this->hasMedia('slide'),
-                fn () => [
-                    'url' => $this->getFirstMediaUrl('slide'),
-                    'hero' => $this->getFirstMediaUrl('slide', 'hero'),
-                ]
-            ),
-            'meta' => $this->meta,
         ];
     }
 }

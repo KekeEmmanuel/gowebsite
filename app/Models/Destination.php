@@ -21,16 +21,20 @@ class Destination extends Model implements HasMedia
         'slug',
         'region',
         'teaser',
+        'tag',
         'description',
+        'image_base64',
         'map_embed_url',
         'hero_media_id',
         'is_featured',
+        'display_order',
         'published_at',
         'seo_meta',
     ];
 
     protected $casts = [
         'is_featured' => 'boolean',
+        'display_order' => 'integer',
         'published_at' => 'datetime',
         'seo_meta' => 'array',
     ];

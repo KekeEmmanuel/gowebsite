@@ -18,6 +18,9 @@ class Itinerary extends Model implements HasMedia
 
     protected $fillable = [
         'title',
+        'summary',
+        'badge',
+        'image_base64',
         'slug',
         'service_type_id',
         'destination_id',

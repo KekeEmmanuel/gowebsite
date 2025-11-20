@@ -18,7 +18,10 @@ class HeroSlide extends Model implements HasMedia
 
     protected $fillable = [
         'title',
+        'label',
         'subtitle',
+        'description',
+        'image_base64',
         'cta_label',
         'cta_url',
         'media_id',

@@ -20,10 +20,16 @@ class DestinationResource extends JsonResource
             'slug' => $this->slug,
             'region' => $this->region,
             'teaser' => $this->teaser,
+            'tag' => $this->tag,
             'description' => $this->description,
             'map_embed_url' => $this->map_embed_url,
             'is_featured' => $this->is_featured,
+            'display_order' => $this->display_order,
             'published_at' => optional($this->published_at)->toISOString(),
+            'image' => $this->image_base64 ?: $this->when(
+                $this->relationLoaded('media') || $this->hasMedia('hero'),
+                fn () => $this->getFirstMediaUrl('hero')
+            ),
             'hero_image' => $this->when(
                 $this->relationLoaded('media') || $this->hasMedia('hero'),
                 fn () => [
