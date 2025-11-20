@@ -1,5 +1,8 @@
 [phases.setup]
 nixPkgs = ["nodejs_20", "php82"]
+cmds = [
+  "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
+]
 
 [phases.install]
 cmds = [
