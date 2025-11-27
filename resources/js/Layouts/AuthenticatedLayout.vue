@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 
 const showingSidebar = ref(false);
 const sidebarCollapsed = ref(false);
@@ -13,6 +13,15 @@ const toggleSidebar = () => {
     if (typeof window !== 'undefined') {
         localStorage.setItem('sidebarCollapsed', sidebarCollapsed.value);
     }
+};
+
+const handleLogout = () => {
+    router.post(route('logout'), {}, {
+        preserveScroll: false,
+        onSuccess: () => {
+            // Redirect handled by server
+        },
+    });
 };
 
 // Load sidebar state from localStorage
@@ -161,17 +170,15 @@ const isActiveRoute = (routeName) => {
                                 </svg>
                                 Profile Settings
                             </DropdownLink>
-                            <DropdownLink
-                                :href="route('logout')"
-                                method="post"
-                                as="button"
-                                class="flex items-center gap-2 text-red-600 hover:bg-red-50"
+                            <button
+                                @click="handleLogout"
+                                class="flex w-full items-center gap-2 px-4 py-2 text-start text-sm leading-5 text-red-600 transition duration-150 ease-in-out hover:bg-red-50 focus:bg-red-50 focus:outline-none"
                             >
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                 </svg>
                                 Log Out
-                            </DropdownLink>
+                            </button>
                         </template>
                     </Dropdown>
                 </div>
