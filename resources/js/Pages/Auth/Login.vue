@@ -33,18 +33,23 @@ const submit = () => {
     <GuestLayout>
         <Head title="Log in" />
 
-        <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
+        <div class="mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">Welcome Back</h2>
+            <p class="mt-1 text-sm text-gray-600">Sign in to your admin account</p>
+        </div>
+
+        <div v-if="status" class="mb-4 rounded-lg bg-green-50 p-3 text-sm font-medium text-green-800">
             {{ status }}
         </div>
 
-        <form @submit.prevent="submit">
+        <form @submit.prevent="submit" class="space-y-5">
             <div>
-                <InputLabel for="email" value="Email" />
+                <InputLabel for="email" value="Email" class="text-sm font-semibold text-gray-700" />
 
                 <TextInput
                     id="email"
                     type="email"
-                    class="mt-1 block w-full"
+                    class="mt-2 block w-full"
                     v-model="form.email"
                     required
                     autofocus
@@ -54,13 +59,13 @@ const submit = () => {
                 <InputError class="mt-2" :message="form.errors.email" />
             </div>
 
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
+            <div>
+                <InputLabel for="password" value="Password" class="text-sm font-semibold text-gray-700" />
 
                 <TextInput
                     id="password"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="mt-2 block w-full"
                     v-model="form.password"
                     required
                     autocomplete="current-password"
@@ -69,28 +74,35 @@ const submit = () => {
                 <InputError class="mt-2" :message="form.errors.password" />
             </div>
 
-            <div class="mt-4 block">
+            <div class="flex items-center justify-between">
                 <label class="flex items-center">
                     <Checkbox name="remember" v-model:checked="form.remember" />
                     <span class="ms-2 text-sm text-gray-600">Remember me</span>
                 </label>
-            </div>
 
-            <div class="mt-4 flex items-center justify-end">
                 <Link
                     v-if="canResetPassword"
                     :href="route('password.request')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    class="text-sm font-medium text-safari-gold hover:text-safari-gold/80 hover:underline focus:outline-none focus:ring-2 focus:ring-safari-gold focus:ring-offset-2 rounded"
                 >
-                    Forgot your password?
+                    Forgot password?
                 </Link>
+            </div>
 
+            <div class="pt-2">
                 <PrimaryButton
-                    class="ms-3"
+                    class="w-full justify-center bg-gradient-to-r from-safari-gold to-safari-gold/90 hover:from-safari-gold/90 hover:to-safari-gold font-semibold shadow-md hover:shadow-lg transition-all duration-200"
                     :class="{ 'opacity-25': form.processing }"
                     :disabled="form.processing"
                 >
-                    Log in
+                    <span v-if="!form.processing">Sign In</span>
+                    <span v-else class="flex items-center">
+                        <svg class="mr-2 h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Signing in...
+                    </span>
                 </PrimaryButton>
             </div>
         </form>
