@@ -22,6 +22,7 @@ const heroSlides = ref<HeroSlide[]>([]);
 const isLoading = ref(true);
 const showNavbar = ref(true);
 const lastScrollY = ref(0);
+const showBackToTop = ref(false);
 
 // Fetch hero slides and feature cards from API
 onMounted(async () => {
@@ -365,7 +366,18 @@ const handleScroll = () => {
     showNavbar.value = false;
   }
   
+  // Show back-to-top button when scrolled down more than 300px
+  showBackToTop.value = currentScrollY > 300;
+  
   lastScrollY.value = currentScrollY;
+};
+
+// Scroll to top function
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  });
 };
 
 onMounted(() => {
@@ -1364,5 +1376,25 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
         </div>
       </div>
     </footer>
+
+    <!-- Back to Top Button -->
+    <button
+      v-if="showBackToTop"
+      @click="scrollToTop"
+      class="fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-safari-gold via-safari-gold/90 to-safari-gold/80 shadow-glow-gold transition-all duration-300 hover:scale-110 hover:shadow-glow-gold hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-safari-gold focus:ring-offset-2 group"
+      aria-label="Back to top"
+    >
+      <svg
+        class="h-6 w-6 text-charcoal transition-transform duration-300 group-hover:-translate-y-1"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        viewBox="0 0 24 24"
+      >
+        <path d="M5 10l7-7m0 0l7 7m-7-7v18" />
+      </svg>
+    </button>
   </div>
 </template>
