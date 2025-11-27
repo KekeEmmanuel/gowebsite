@@ -1,5 +1,13 @@
 <script setup lang="ts">
 import { computed, h, onBeforeUnmount, onMounted, ref } from 'vue';
+import {
+  DEFAULT_DESTINATIONS,
+  DEFAULT_ITINERARIES,
+  DEFAULT_LODGES,
+  DEFAULT_FEATURE_CARDS,
+  DEFAULT_HERO_SLIDES,
+  fetchWithTimeout,
+} from '../data/defaults';
 
 type HeroSlide = {
   image: string;
@@ -17,9 +25,12 @@ const lastScrollY = ref(0);
 
 // Fetch hero slides and feature cards from API
 onMounted(async () => {
-  // Fetch hero slides
+  // Fetch hero slides with timeout and fallback
   try {
-    const response = await fetch('/api/hero-slides');
+    const response = await fetchWithTimeout('/api/hero-slides', {}, 8000);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
     
     // Handle both wrapped and unwrapped responses
@@ -34,35 +45,14 @@ onMounted(async () => {
         ctaLabel: slide.ctaLabel || 'Learn More',
         ctaHref: slide.ctaHref || '#',
       }));
-    }
-    
-    // Fallback to default slides if API returns empty
-    if (heroSlides.value.length === 0) {
-      heroSlides.value = [
-        {
-          image: '/images/safari/moses-londo-5Lm1A5vxczc-unsplash.jpg',
-          label: 'Tailored Luxury Adventures',
-          title: 'Encounter Tanzania\'s wild soul – from savannah to spice isles',
-          description:
-            'Join expert guides for once-in-a-lifetime safaris blending iconic wildlife moments, Kilimanjaro summits, and barefoot beach retreats.',
-          ctaLabel: 'Explore Signature Safaris',
-          ctaHref: '#safaris',
-        },
-      ];
+    } else {
+      console.warn('No hero slides found in API response, using defaults');
+      heroSlides.value = [...DEFAULT_HERO_SLIDES];
     }
   } catch (error) {
-    console.error('Error fetching hero slides:', error);
-    // Fallback to default slide
-    heroSlides.value = [
-      {
-        image: '/images/safari/wildlife-savannah.jpg',
-        label: 'Welcome to Tanzania',
-        title: 'Discover the beauty of Tanzania',
-        description: 'Experience unforgettable safaris and adventures.',
-        ctaLabel: 'Explore',
-        ctaHref: '#safaris',
-      },
-    ];
+    console.error('Error fetching hero slides (network/timeout/error):', error);
+    // Always use defaults on any error
+    heroSlides.value = [...DEFAULT_HERO_SLIDES];
   } finally {
     isLoading.value = false;
     if (heroSlides.value.length > 0) {
@@ -70,9 +60,12 @@ onMounted(async () => {
     }
   }
 
-  // Fetch feature cards
+  // Fetch feature cards with timeout and fallback
   try {
-    const response = await fetch('/api/feature-cards');
+    const response = await fetchWithTimeout('/api/feature-cards', {}, 8000);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
     
     // Handle both wrapped and unwrapped responses
@@ -86,58 +79,14 @@ onMounted(async () => {
         copy: card.copy || '',
         count_value: card.count_value || null,
       }));
-    }
-    
-    // Fallback to default cards if API returns empty
-    if (featureCards.value.length === 0) {
-      featureCards.value = [
-        {
-          icon: 'travellers',
-          title: 'Happy Travellers Yearly',
-          headline: '500+ Happy Travellers Yearly',
-          copy:
-            'Expert travel designers crafting hand-picked itineraries and seamless logistics for every guest.',
-          count_value: 500,
-        },
-        {
-          icon: 'pricing',
-          title: 'Best Price Guarantee',
-          copy:
-            'Preferred partner rates across lodges, charter flights, and experiences tailored to your budget.',
-        },
-        {
-          icon: 'support',
-          title: '24/7 Top-Notch Support',
-          copy:
-            'Dedicated concierge before, during, and after your safari—always a WhatsApp or call away.',
-        },
-      ];
+    } else {
+      console.warn('No feature cards found in API response, using defaults');
+      featureCards.value = [...DEFAULT_FEATURE_CARDS];
     }
   } catch (error) {
-    console.error('Error fetching feature cards:', error);
-    // Fallback to default cards
-    featureCards.value = [
-      {
-        icon: 'travellers',
-        title: 'Happy Travellers Yearly',
-        headline: '500+ Happy Travellers Yearly',
-        copy:
-          'Expert travel designers crafting hand-picked itineraries and seamless logistics for every guest.',
-        count_value: 500,
-      },
-      {
-        icon: 'pricing',
-        title: 'Best Price Guarantee',
-        copy:
-          'Preferred partner rates across lodges, charter flights, and experiences tailored to your budget.',
-      },
-      {
-        icon: 'support',
-        title: '24/7 Top-Notch Support',
-        copy:
-          'Dedicated concierge before, during, and after your safari—always a WhatsApp or call away.',
-      },
-    ];
+    console.error('Error fetching feature cards (network/timeout/error):', error);
+    // Always use defaults on any error
+    featureCards.value = [...DEFAULT_FEATURE_CARDS];
   }
 
   // Fetch about stats
@@ -249,10 +198,10 @@ onMounted(async () => {
     featureObserver.observe(featureSection.value);
   }
 
-  // Fetch safari packages (itineraries)
+  // Fetch safari packages (itineraries) with timeout and fallback
   isLoadingSafaris.value = true;
   try {
-    const response = await fetch('/api/itineraries?per_page=6');
+    const response = await fetchWithTimeout('/api/itineraries?per_page=6', {}, 8000);
     if (!response.ok) {
       console.error('API Error:', response.status, response.statusText);
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -278,105 +227,21 @@ onMounted(async () => {
         service_type: itinerary.service_type?.name || null,
         destination: itinerary.destination?.name || null,
       }));
-    }
-    
-    // Only use fallback if we truly have no data from API
-    if (safariPackages.value.length === 0) {
-      safariPackages.value = [
-        {
-          title: 'Great Migration Serengeti Safari',
-          summary:
-            'Follow the famed wildebeest march with private 4x4 game drives, exclusive viewing decks, and optional sunrise balloon flights.',
-          meta: '7 days · Serengeti & Grumeti',
-          image: '/images/safari/wildlife-savannah.jpg',
-          badge: 'Signature Collection',
-          highlights: [
-            'Luxury tented camps positioned on migration corridors',
-            'Dedicated photographic guide & spotter team',
-            'Champagne brunch set on the savannah rim',
-          ],
-        },
-        {
-          title: 'Kilimanjaro Machame Summit Trek',
-          summary:
-            'Pole pole ascent that blends private acclimatisation camps, chef-prepared cuisine, and summit-day oxygen support.',
-          meta: '8 days · Machame Route',
-          image: '/images/safari/pawan-sharma-GDMPFQPjNlA-unsplash.jpg',
-          badge: 'Expedition Grade',
-          highlights: [
-            'Maximum 8 climbers per departure',
-            'Hyperbaric chamber & medical lead on trek',
-            'Celebratory stay at a boutique Arusha manor',
-          ],
-        },
-        {
-          title: 'Zanzibar Spice & Beach Escape',
-          summary:
-            'Taste Stone Town\'s spice heritage then drift between private villa resorts, dhow cruises, and reef snorkelling.',
-          meta: '6 days · Zanzibar Archipelago',
-          image: '/images/safari/beach-1.jpg',
-          badge: 'Coastal Indulgence',
-          highlights: [
-            'Guided Stone Town heritage & culinary tour',
-            'Private sunset dhow with live taarab music',
-            'Wellness rituals at oceanside spa pavilions',
-          ],
-        },
-      ];
+    } else {
+      console.warn('No itineraries found in API response, using defaults');
+      safariPackages.value = [...DEFAULT_ITINERARIES];
     }
   } catch (error) {
-    console.error('Error fetching safari packages:', error);
-    // Only use fallback on actual error, not if API returned empty array
-    if (safariPackages.value.length === 0) {
-      safariPackages.value = [
-        {
-          title: 'Great Migration Serengeti Safari',
-        summary:
-          'Follow the famed wildebeest march with private 4x4 game drives, exclusive viewing decks, and optional sunrise balloon flights.',
-        meta: '7 days · Serengeti & Grumeti',
-        image: '/images/safari/wildlife-savannah.jpg',
-        badge: 'Signature Collection',
-        highlights: [
-          'Luxury tented camps positioned on migration corridors',
-          'Dedicated photographic guide & spotter team',
-          'Champagne brunch set on the savannah rim',
-        ],
-      },
-      {
-        title: 'Kilimanjaro Machame Summit Trek',
-        summary:
-          'Pole pole ascent that blends private acclimatisation camps, chef-prepared cuisine, and summit-day oxygen support.',
-        meta: '8 days · Machame Route',
-        image: '/images/safari/pawan-sharma-GDMPFQPjNlA-unsplash.jpg',
-        badge: 'Expedition Grade',
-        highlights: [
-          'Maximum 8 climbers per departure',
-          'Hyperbaric chamber & medical lead on trek',
-          'Celebratory stay at a boutique Arusha manor',
-        ],
-      },
-      {
-        title: 'Zanzibar Spice & Beach Escape',
-        summary:
-          'Taste Stone Town\'s spice heritage then drift between private villa resorts, dhow cruises, and reef snorkelling.',
-        meta: '6 days · Zanzibar Archipelago',
-        image: '/images/safari/beach-1.jpg',
-        badge: 'Coastal Indulgence',
-        highlights: [
-          'Guided Stone Town heritage & culinary tour',
-          'Private sunset dhow with live taarab music',
-          'Wellness rituals at oceanside spa pavilions',
-        ],
-      },
-    ];
-    }
+    console.error('Error fetching safari packages (network/timeout/error):', error);
+    // Always use defaults on any error (network, timeout, API error, etc.)
+    safariPackages.value = [...DEFAULT_ITINERARIES];
   } finally {
     isLoadingSafaris.value = false;
   }
 
-  // Fetch destinations
+  // Fetch destinations with timeout and fallback
   try {
-    const response = await fetch('/api/destinations?featured=true&per_page=5');
+    const response = await fetchWithTimeout('/api/destinations?featured=true&per_page=5', {}, 8000);
     if (!response.ok) {
       console.error('API Error:', response.status, response.statusText);
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -398,74 +263,21 @@ onMounted(async () => {
       }));
       console.log('Mapped destinationSpots:', destinationSpots.value);
     } else {
-      console.warn('No destinations found in API response');
-    }
-    
-    // Fallback to default destinations if API returns empty
-    if (destinationSpots.value.length === 0) {
-      destinationSpots.value = [
-        {
-          name: 'Serengeti National Park',
-          tag: 'Great Migration',
-          description: 'River-crossing drama, predator action, endless horizons under technicolour sunsets.',
-          image: '/images/safari/wildlife-savannah.jpg',
-        },
-        {
-          name: 'Ngorongoro Crater',
-          tag: 'World Heritage',
-          description: 'A collapsed caldera teeming with BIG5 sightings, Maasai culture, and mist-draped mornings.',
-          image: '/images/safari/wildlife-herd.jpg',
-        },
-        {
-          name: 'Mount Kilimanjaro',
-          tag: 'Summit Trek',
-          description: 'Africa\'s rooftop crowned by glaciers, alpine desert moonscapes, and iconic Uhuru sunrise.',
-          image: '/images/safari/pawan-sharma-GDMPFQPjNlA-unsplash.jpg',
-        },
-        {
-          name: 'Ruaha & Selous Reserves',
-          tag: 'Southern Circuit',
-          description: 'Remote fly-in safaris with boating on the Rufiji, walking trails, and off-grid luxury camps.',
-          image: '/images/safari/wildlife-herd.jpg',
-        },
-        {
-          name: 'Zanzibar Archipelago',
-          tag: 'Coastal Haven',
-          description: 'From Matemwe reefs to Mnemba atoll, drift between spice farms and barefoot luxury hideaways.',
-          image: '/images/safari/beach-2.jpg',
-        },
-      ];
+      console.warn('No destinations found in API response, using defaults');
+      destinationSpots.value = [...DEFAULT_DESTINATIONS];
     }
   } catch (error) {
-    console.error('Error fetching destinations:', error);
-    // Fallback to default destinations
-    if (destinationSpots.value.length === 0) {
-      destinationSpots.value = [
-        {
-          name: 'Serengeti National Park',
-          tag: 'Great Migration',
-          description: 'River-crossing drama, predator action, endless horizons under technicolour sunsets.',
-          image: '/images/safari/wildlife-savannah.jpg',
-        },
-        {
-          name: 'Ngorongoro Crater',
-          tag: 'World Heritage',
-          description: 'A collapsed caldera teeming with BIG5 sightings, Maasai culture, and mist-draped mornings.',
-          image: '/images/safari/wildlife-herd.jpg',
-        },
-        {
-          name: 'Mount Kilimanjaro',
-          tag: 'Summit Trek',
-          description: 'Africa\'s rooftop crowned by glaciers, alpine desert moonscapes, and iconic Uhuru sunrise.',
-          image: '/images/safari/pawan-sharma-GDMPFQPjNlA-unsplash.jpg',
-        },
-      ];
-    }
+    console.error('Error fetching destinations (network/timeout/error):', error);
+    // Always use defaults on any error (network, timeout, API error, etc.)
+    destinationSpots.value = [...DEFAULT_DESTINATIONS];
   }
 
-  // Fetch lodges
+  // Fetch lodges with timeout and fallback
   try {
-    const response = await fetch('/api/lodges');
+    const response = await fetchWithTimeout('/api/lodges', {}, 8000);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
     
     const lodges = Array.isArray(data) ? data : (data.data || []);
@@ -477,66 +289,14 @@ onMounted(async () => {
         image: lodge.image || '/images/safari/lodge-1.jpg',
         mood: lodge.mood || '',
       }));
-    }
-    
-    // Fallback to default lodges if API returns empty
-    if (signatureLodges.value.length === 0) {
-      signatureLodges.value = [
-        {
-          name: 'Four Seasons Safari Lodge',
-          location: 'Serengeti Plains',
-          image: '/images/safari/lodge-1.jpg',
-          mood: 'Waterhole-facing infinity pools & spa sanctuaries in the savannah canopy.',
-        },
-        {
-          name: 'Gibb\'s Farm Manor House',
-          location: 'Ngorongoro Highlands',
-          image: '/images/safari/lodge-2.jpg',
-          mood: 'Artist cottages, organic farm-to-table dining, and valley views wrapped in coffee estates.',
-        },
-        {
-          name: 'The Residence Zanzibar',
-          location: 'Kizimkazi Peninsula',
-          image: '/images/safari/beach-3.jpg',
-          mood: 'Private pool villas, butler-led service, and azure lagoons inspired by Swahili heritage.',
-        },
-        {
-          name: 'Chem Chem Lodge',
-          location: 'Lake Manyara Corridor',
-          image: '/images/safari/alferio-njau-MESNFA-pINg-unsplash.jpg',
-          mood: 'Slow safari philosophy with sunrise yoga decks, Maasai-led walks, and flamingo-dusted vistas.',
-        },
-      ];
+    } else {
+      console.warn('No lodges found in API response, using defaults');
+      signatureLodges.value = [...DEFAULT_LODGES];
     }
   } catch (error) {
-    console.error('Error fetching lodges:', error);
-    // Fallback to default lodges
-    signatureLodges.value = [
-      {
-        name: 'Four Seasons Safari Lodge',
-        location: 'Serengeti Plains',
-        image: '/images/safari/lodge-1.jpg',
-        mood: 'Waterhole-facing infinity pools & spa sanctuaries in the savannah canopy.',
-      },
-      {
-        name: 'Gibb\'s Farm Manor House',
-        location: 'Ngorongoro Highlands',
-        image: '/images/safari/lodge-2.jpg',
-        mood: 'Artist cottages, organic farm-to-table dining, and valley views wrapped in coffee estates.',
-      },
-      {
-        name: 'The Residence Zanzibar',
-        location: 'Kizimkazi Peninsula',
-        image: '/images/safari/beach-3.jpg',
-        mood: 'Private pool villas, butler-led service, and azure lagoons inspired by Swahili heritage.',
-      },
-      {
-        name: 'Chem Chem Lodge',
-        location: 'Lake Manyara Corridor',
-        image: '/images/safari/alferio-njau-MESNFA-pINg-unsplash.jpg',
-        mood: 'Slow safari philosophy with sunrise yoga decks, Maasai-led walks, and flamingo-dusted vistas.',
-      },
-    ];
+    console.error('Error fetching lodges (network/timeout/error):', error);
+    // Always use defaults on any error
+    signatureLodges.value = [...DEFAULT_LODGES];
   }
 });
 
