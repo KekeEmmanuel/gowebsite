@@ -1,13 +1,17 @@
 <script setup>
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
     <div class="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0">
         <div>
-            <Link href="/">
-                <ApplicationLogo class="h-20 w-20 fill-current text-gray-500" />
+            <Link href="/" class="flex items-center justify-center">
+                <img
+                    src="/images/safari/mpya.png"
+                    alt="Go Tanzania Safari"
+                    class="h-24 w-auto object-contain transition-all duration-300 hover:scale-105"
+                    style="filter: brightness(0.3) contrast(1.2) saturate(1.1);"
+                />
             </Link>
         </div>
 
