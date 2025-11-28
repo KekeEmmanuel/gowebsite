@@ -1227,15 +1227,15 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
             <!-- Left Column: Contact Info & Quick Facts -->
             <div class="flex flex-col space-y-8">
               <!-- Contact Channels -->
-              <div class="grid gap-5 sm:grid-cols-2">
+              <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <div
                   v-for="channel in contactChannels"
                   :key="channel.label"
-                  class="group rounded-3xl border border-white/20 bg-white/5 backdrop-blur-sm p-6 transition-all duration-300 hover:border-safari-gold/60 hover:bg-white/10 hover:shadow-lg hover:shadow-safari-gold/20"
+                  class="group flex h-full flex-col rounded-3xl border border-white/20 bg-white/5 backdrop-blur-sm p-6 transition-all duration-300 hover:border-safari-gold/60 hover:bg-white/10 hover:shadow-lg hover:shadow-safari-gold/20"
                 >
-                  <p class="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-safari-gold">{{ channel.label }}</p>
-                  <p class="text-xl font-heading font-bold text-white">{{ channel.value }}</p>
-                  <p class="mt-2 text-sm uppercase tracking-[0.2em] text-white/70" v-html="channel.detail"></p>
+                  <p class="mb-3 text-xs font-bold uppercase tracking-[0.35em] text-safari-gold">{{ channel.label }}</p>
+                  <p class="mb-auto text-xl font-heading font-bold leading-tight text-white">{{ channel.value }}</p>
+                  <p class="mt-3 text-sm uppercase tracking-[0.2em] leading-relaxed text-white/70" v-html="channel.detail"></p>
                 </div>
               </div>
 
