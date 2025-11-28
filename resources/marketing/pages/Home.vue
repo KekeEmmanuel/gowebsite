@@ -1208,47 +1208,84 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
         <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(217,154,56,0.08),transparent_70%)]"></div>
         <div class="absolute inset-y-0 right-0 hidden w-1/2 bg-[url('/images/safari/kelvin-zyteng-gxS48JsmH_0-unsplash.jpg')] bg-cover bg-center opacity-10 lg:block"></div>
         <div class="relative mx-auto max-w-7xl px-6">
-          <div class="grid gap-16 lg:grid-cols-[0.95fr_1.05fr]">
-            <div class="space-y-10">
-              <div class="space-y-6">
-                <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
-                  Start Planning
-                </p>
-                <h2 class="text-4xl font-heading font-bold text-white leading-tight sm:text-5xl lg:text-6xl text-balance">
-                  Share your dream safari—we'll craft a tailored itinerary within 24 hours
-                </h2>
-                <p class="text-lg leading-relaxed text-white/80">
-                  Tell us who you are travelling with, the wildlife you are eager to witness, and your ideal travel window.
-                  We will reply with curated route ideas, accommodations, and investment options.
-                </p>
-              </div>
-              <div class="grid gap-6 sm:grid-cols-2">
+          <!-- Section Header -->
+          <div class="mb-16 text-center lg:mb-20">
+            <p class="mb-4 text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
+              Start Planning
+            </p>
+            <h2 class="mx-auto max-w-4xl text-4xl font-heading font-bold text-white leading-tight sm:text-5xl lg:text-6xl text-balance">
+              Share your dream safari—we'll craft a tailored itinerary within 24 hours
+            </h2>
+            <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/80">
+              Tell us who you are travelling with, the wildlife you are eager to witness, and your ideal travel window.
+              We will reply with curated route ideas, accommodations, and investment options.
+            </p>
+          </div>
+
+          <!-- Main Content Grid -->
+          <div class="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+            <!-- Left Column: Contact Info & Quick Facts -->
+            <div class="flex flex-col space-y-8">
+              <!-- Contact Channels -->
+              <div class="grid gap-5 sm:grid-cols-2">
                 <div
                   v-for="channel in contactChannels"
                   :key="channel.label"
-                  class="group rounded-3xl border border-white/20 glass-dark p-8 transition-all duration-300 hover:border-safari-gold/60 hover:bg-white/10 hover:shadow-medium"
+                  class="group rounded-3xl border border-white/20 bg-white/5 backdrop-blur-sm p-6 transition-all duration-300 hover:border-safari-gold/60 hover:bg-white/10 hover:shadow-lg hover:shadow-safari-gold/20"
                 >
-                  <p class="text-xs font-bold uppercase tracking-[0.35em] text-safari-gold mb-3">{{ channel.label }}</p>
+                  <p class="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-safari-gold">{{ channel.label }}</p>
                   <p class="text-xl font-heading font-bold text-white">{{ channel.value }}</p>
-                  <p class="mt-3 text-sm uppercase tracking-[0.2em] text-white/70" v-html="channel.detail"></p>
+                  <p class="mt-2 text-sm uppercase tracking-[0.2em] text-white/70" v-html="channel.detail"></p>
                 </div>
               </div>
-              <ul class="space-y-3 text-sm text-white/70">
-                <li
-                  v-for="fact in contactQuickFacts"
-                  :key="fact"
-                  class="flex gap-3"
-                >
-                  <span class="mt-1 inline-flex h-2 w-2 flex-none rounded-full bg-safari-gold"></span>
-                  <span>{{ fact }}</span>
-                </li>
-              </ul>
+
+              <!-- Quick Facts -->
+              <div class="rounded-3xl border border-white/20 bg-white/5 backdrop-blur-sm p-8">
+                <p class="mb-6 text-xs font-bold uppercase tracking-[0.35em] text-safari-gold">
+                  Why Choose Us
+                </p>
+                <ul class="space-y-4 text-sm text-white/80">
+                  <li
+                    v-for="fact in contactQuickFacts"
+                    :key="fact"
+                    class="flex items-start gap-3"
+                  >
+                    <span class="mt-1.5 inline-flex h-2 w-2 flex-none rounded-full bg-safari-gold shadow-sm"></span>
+                    <span class="leading-relaxed">{{ fact }}</span>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Location Card -->
+              <div class="rounded-3xl border border-white/20 bg-white/5 backdrop-blur-sm p-8 shadow-medium">
+                <p class="mb-4 text-xs font-bold uppercase tracking-[0.35em] text-safari-gold">
+                  Meet us in person
+                </p>
+                <p class="mb-6 text-base leading-relaxed text-white/90">
+                  Go Tanzania Safari Studio · Sokoine Road, Arusha 23100 · Visits by appointment only
+                </p>
+                <div class="h-48 overflow-hidden rounded-2xl border border-white/20 shadow-soft">
+                  <iframe
+                    title="Go Tanzania Safari Studio Map"
+                    src="https://maps.google.com/maps?q=Arusha%2C%20Tanzania&t=&z=13&ie=UTF8&iwloc=&output=embed"
+                    class="h-full w-full opacity-90 grayscale transition-opacity duration-300 hover:opacity-100 hover:grayscale-0"
+                    loading="lazy"
+                  ></iframe>
+                </div>
+              </div>
             </div>
-            <div class="space-y-8">
-              <form class="space-y-6 rounded-3xl border border-white/20 glass-dark p-10 shadow-large">
+
+            <!-- Right Column: Contact Form -->
+            <div class="lg:sticky lg:top-8 lg:h-fit">
+              <form class="space-y-6 rounded-3xl border border-white/20 bg-white/5 backdrop-blur-sm p-8 shadow-large sm:p-10">
+                <div class="mb-6">
+                  <h3 class="text-2xl font-heading font-bold text-white">Get in Touch</h3>
+                  <p class="mt-2 text-sm text-white/70">Fill out the form below and we'll get back to you within 24 hours.</p>
+                </div>
+
                 <div class="grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label class="text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="fullname">
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="fullname">
                       Full Name
                     </label>
                     <input
@@ -1259,7 +1296,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                     />
                   </div>
                   <div>
-                    <label class="text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="email">
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="email">
                       Email Address
                     </label>
                     <input
@@ -1270,9 +1307,10 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                     />
                   </div>
                 </div>
+
                 <div class="grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label class="text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="phone">
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="phone">
                       Phone / WhatsApp
                     </label>
                     <input
@@ -1283,7 +1321,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                     />
                   </div>
                   <div>
-                    <label class="text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="travelers">
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="travelers">
                       Travellers
                     </label>
                     <input
@@ -1295,23 +1333,25 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                     />
                   </div>
                 </div>
+
                 <div>
-                  <label class="text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="service">
+                  <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="service">
                     Experience Type
                   </label>
                   <select
                     id="service"
                     class="mt-2 w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-5 py-3.5 text-white transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50"
                   >
-                    <option class="text-charcoal bg-white" value="">Select</option>
+                    <option class="text-charcoal bg-white" value="">Select an experience</option>
                     <option class="text-charcoal bg-white" value="wildlife">Wildlife Safari</option>
                     <option class="text-charcoal bg-white" value="kili">Kilimanjaro Expedition</option>
                     <option class="text-charcoal bg-white" value="coast">Coastal Retreat</option>
                     <option class="text-charcoal bg-white" value="honeymoon">Honeymoon Celebration</option>
                   </select>
                 </div>
+
                 <div>
-                  <label class="text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="message">
+                  <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="message">
                     Tell Us More
                   </label>
                   <textarea
@@ -1321,30 +1361,19 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                     class="mt-2 w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-5 py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50"
                   ></textarea>
                 </div>
+
                 <button
                   type="submit"
-                  class="group w-full rounded-full bg-safari-gold px-8 py-4 text-sm font-bold text-charcoal transition-all duration-300 hover:bg-safari-gold-light hover:shadow-glow-gold hover:scale-105"
+                  class="group mt-8 w-full rounded-full bg-gradient-to-r from-safari-gold to-orange-500 px-8 py-4 text-sm font-bold text-charcoal shadow-lg transition-all duration-300 hover:from-safari-gold-light hover:to-orange-400 hover:shadow-glow-gold hover:scale-105"
                 >
-                  Submit Inquiry
-                  <span class="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
+                  <span class="flex items-center justify-center">
+                    Submit Inquiry
+                    <svg class="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
+                  </span>
                 </button>
               </form>
-              <div class="rounded-3xl border border-white/20 glass-dark p-8 shadow-medium">
-                <p class="text-xs font-bold uppercase tracking-[0.35em] text-safari-gold mb-4">
-                  Meet us in person
-                </p>
-                <p class="text-base leading-relaxed text-white/90">
-                  Go Tanzania Safari Studio · Sokoine Road, Arusha 23100 · Visits by appointment only
-                </p>
-                <div class="mt-6 h-48 overflow-hidden rounded-2xl border border-white/20 shadow-soft">
-                  <iframe
-                    title="Go Tanzania Safari Studio Map"
-                    src="https://maps.google.com/maps?q=Arusha%2C%20Tanzania&t=&z=13&ie=UTF8&iwloc=&output=embed"
-                    class="h-full w-full opacity-90 grayscale transition-opacity duration-300 hover:opacity-100 hover:grayscale-0"
-                    loading="lazy"
-                  ></iframe>
-                </div>
-              </div>
             </div>
           </div>
         </div>
