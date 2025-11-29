@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, h, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import {
   DEFAULT_DESTINATIONS,
   DEFAULT_ITINERARIES,
@@ -8,6 +9,8 @@ import {
   DEFAULT_HERO_SLIDES,
   fetchWithTimeout,
 } from '../data/defaults';
+
+const router = useRouter();
 
 type HeroSlide = {
   image: string;
@@ -946,7 +949,8 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
             <article
               v-for="(safari, index) in safariPackages"
               :key="safari.id || safari.title || index"
-              class="group relative flex flex-col overflow-hidden rounded-3xl glass-dark border border-white/20 shadow-large transition-all duration-500 hover:-translate-y-4 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] hover:bg-white/15 hover:border-white/30"
+              @click="() => safari.slug && $router.push(`/itineraries/${safari.slug}`)"
+              class="group relative flex flex-col overflow-hidden rounded-3xl glass-dark border border-white/20 shadow-large transition-all duration-500 hover:-translate-y-4 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] hover:bg-white/15 hover:border-white/30 cursor-pointer"
             >
               <!-- Image Container -->
               <div class="relative h-64 overflow-hidden">
@@ -1013,7 +1017,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                       ${{ typeof safari.price_from === 'number' ? safari.price_from.toLocaleString() : safari.price_from }}
                     </p>
                   </div>
-                  <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-3" @click.stop>
                     <router-link
                       :to="`/itineraries/${safari.slug || ''}`"
                       class="group flex-1 rounded-full bg-safari-gold px-6 py-3.5 text-center text-sm font-semibold text-charcoal transition-all duration-300 hover:bg-safari-gold-light hover:shadow-glow-gold hover:scale-105"
@@ -1023,6 +1027,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                     </router-link>
                     <a
                       href="#contact"
+                      @click.stop
                       class="group flex items-center justify-center rounded-full border-2 border-white/40 bg-white/5 backdrop-blur-sm px-6 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:border-white hover:bg-white/20 hover:scale-105"
                     >
                       Tailor

@@ -2,6 +2,15 @@
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+type GalleryImage = {
+  id: number;
+  url: string;
+  thumb: string;
+  cover: string;
+  name: string;
+  alt?: string;
+};
+
 type Itinerary = {
   id: number;
   slug: string;
@@ -19,6 +28,7 @@ type Itinerary = {
   tags: string[] | null;
   service_type: { name: string; slug: string } | null;
   destination: { name: string; slug: string; region: string } | null;
+  gallery?: GalleryImage[];
 };
 
 const route = useRoute();
@@ -26,6 +36,8 @@ const router = useRouter();
 const itinerary = ref<Itinerary | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+const selectedImageIndex = ref(0);
+const showImageModal = ref(false);
 
 onMounted(async () => {
   const slug = route.params.slug as string;
@@ -188,6 +200,30 @@ onMounted(async () => {
               <p v-if="itinerary.summary" class="text-lg leading-relaxed text-charcoal/80" v-html="itinerary.summary"></p>
             </section>
 
+            <!-- Gallery -->
+            <section v-if="itinerary.gallery && itinerary.gallery.length > 0">
+              <h2 class="text-3xl font-heading text-charcoal mb-6">Photo Gallery</h2>
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div
+                  v-for="(image, index) in itinerary.gallery"
+                  :key="image.id"
+                  @click="selectedImageIndex = index; showImageModal = true"
+                  class="group relative aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl bg-safari-sand/20 transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                >
+                  <img
+                    :src="image.thumb || image.url"
+                    :alt="image.alt || image.name || `Gallery image ${index + 1}`"
+                    class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+                  <div class="absolute bottom-0 left-0 right-0 p-4 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <p class="text-sm font-semibold">{{ image.name || `Image ${index + 1}` }}</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <!-- Highlights -->
             <section v-if="itinerary.highlights && itinerary.highlights.length > 0">
               <h2 class="text-3xl font-heading text-charcoal mb-6">Highlights</h2>
@@ -313,6 +349,56 @@ onMounted(async () => {
               </div>
             </div>
           </aside>
+        </div>
+      </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div
+      v-if="showImageModal && itinerary?.gallery && itinerary.gallery.length > 0"
+      @click.self="showImageModal = false"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4"
+    >
+      <button
+        @click="showImageModal = false"
+        class="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-3 text-white backdrop-blur transition hover:bg-white/20"
+        aria-label="Close modal"
+      >
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+      
+      <button
+        v-if="itinerary.gallery.length > 1 && selectedImageIndex > 0"
+        @click="selectedImageIndex = selectedImageIndex - 1"
+        class="absolute left-4 z-10 rounded-full bg-white/10 p-3 text-white backdrop-blur transition hover:bg-white/20"
+        aria-label="Previous image"
+      >
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+      
+      <button
+        v-if="itinerary.gallery.length > 1 && selectedImageIndex < itinerary.gallery.length - 1"
+        @click="selectedImageIndex = selectedImageIndex + 1"
+        class="absolute right-4 z-10 rounded-full bg-white/10 p-3 text-white backdrop-blur transition hover:bg-white/20"
+        aria-label="Next image"
+      >
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+
+      <div class="relative max-h-[90vh] max-w-[90vw]">
+        <img
+          :src="itinerary.gallery[selectedImageIndex].url || itinerary.gallery[selectedImageIndex].cover"
+          :alt="itinerary.gallery[selectedImageIndex].alt || itinerary.gallery[selectedImageIndex].name || 'Gallery image'"
+          class="max-h-[90vh] max-w-[90vw] object-contain"
+        />
+        <div v-if="itinerary.gallery.length > 1" class="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-sm text-white backdrop-blur">
+          {{ selectedImageIndex + 1 }} / {{ itinerary.gallery.length }}
         </div>
       </div>
     </div>

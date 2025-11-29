@@ -34,6 +34,7 @@ class ItineraryController extends Controller
             ->with([
                 'serviceType:id,name,slug',
                 'destination:id,name,slug,region',
+                'media', // Load media for hero and gallery images
             ])
             ->published()
             ->orderBy('is_featured', 'desc') // Featured first
@@ -99,6 +100,7 @@ class ItineraryController extends Controller
             ->with([
                 'serviceType:id,name,slug',
                 'destination:id,name,slug,region,map_embed_url',
+                'media', // Load media for hero and gallery images
             ])
             ->where('slug', $slug)
             ->published()
