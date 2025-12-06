@@ -216,21 +216,41 @@ onMounted(async () => {
     const itineraries = Array.isArray(data) ? data : (data.data || []);
     
     if (itineraries && itineraries.length > 0) {
-      safariPackages.value = itineraries.map((itinerary: any) => ({
-        id: itinerary.id,
-        slug: itinerary.slug,
-        title: itinerary.title || '',
-        summary: itinerary.summary || '',
-        meta: itinerary.meta || `${itinerary.duration_days || ''} days`,
-        image: itinerary.image || itinerary.hero_image?.url || '/images/safari/wildlife-savannah.jpg',
-        badge: itinerary.badge || 'Signature Collection',
-        highlights: Array.isArray(itinerary.highlights) ? itinerary.highlights : [],
-        duration_days: itinerary.duration_days || null,
-        price_from: itinerary.price_from || null,
-        difficulty: itinerary.difficulty || null,
-        service_type: itinerary.service_type?.name || null,
-        destination: itinerary.destination?.name || null,
-      }));
+      safariPackages.value = itineraries.map((itinerary: any) => {
+        // Build image array: hero image first, then gallery images
+        const images: string[] = [];
+        if (itinerary.image || itinerary.hero_image?.url) {
+          images.push(itinerary.image || itinerary.hero_image?.url);
+        }
+        if (itinerary.gallery && Array.isArray(itinerary.gallery)) {
+          itinerary.gallery.forEach((img: any) => {
+            if (img.url && !images.includes(img.url)) {
+              images.push(img.url);
+            }
+          });
+        }
+        // Fallback to default image if no images
+        if (images.length === 0) {
+          images.push('/images/safari/wildlife-savannah.jpg');
+        }
+
+        return {
+          id: itinerary.id,
+          slug: itinerary.slug,
+          title: itinerary.title || '',
+          summary: itinerary.summary || '',
+          meta: itinerary.meta || `${itinerary.duration_days || ''} days`,
+          image: images[0], // First image for backward compatibility
+          images: images, // All images for slider
+          badge: itinerary.badge || 'Signature Collection',
+          highlights: Array.isArray(itinerary.highlights) ? itinerary.highlights : [],
+          duration_days: itinerary.duration_days || null,
+          price_from: itinerary.price_from || null,
+          difficulty: itinerary.difficulty || null,
+          service_type: itinerary.service_type?.name || null,
+          destination: itinerary.destination?.name || null,
+        };
+      });
     } else {
       console.warn('No itineraries found in API response, using defaults');
       safariPackages.value = [...DEFAULT_ITINERARIES];
@@ -383,6 +403,35 @@ const scrollToTop = () => {
   });
 };
 
+// Safari image slider state
+const safariImageIndices = ref<Record<number, number>>({});
+
+const getSafariImageIndex = (safari: SafariPackage, safariIndex: number): number => {
+  return safariImageIndices.value[safariIndex] || 0;
+};
+
+const setSafariImageIndex = (safariIndex: number, imageIndex: number) => {
+  safariImageIndices.value[safariIndex] = imageIndex;
+};
+
+const nextSafariImage = (safariIndex: number) => {
+  const safari = safariPackages.value[safariIndex];
+  if (!safari) return;
+  const images = safari.images || [safari.image];
+  const currentIndex = getSafariImageIndex(safari, safariIndex);
+  const nextIndex = (currentIndex + 1) % images.length;
+  setSafariImageIndex(safariIndex, nextIndex);
+};
+
+const prevSafariImage = (safariIndex: number) => {
+  const safari = safariPackages.value[safariIndex];
+  if (!safari) return;
+  const images = safari.images || [safari.image];
+  const currentIndex = getSafariImageIndex(safari, safariIndex);
+  const prevIndex = (currentIndex - 1 + images.length) % images.length;
+  setSafariImageIndex(safariIndex, prevIndex);
+};
+
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, { passive: true });
 });
@@ -411,6 +460,7 @@ type SafariPackage = {
   summary: string;
   meta: string;
   image: string;
+  images?: string[]; // Array of images for slider
   badge: string;
   highlights: string[];
   duration_days?: number | null;
@@ -1011,40 +1061,85 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
               @click="() => safari.slug && $router.push(`/itineraries/${safari.slug}`)"
               class="group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/8 to-white/5 backdrop-blur-md shadow-xl transition-all duration-500 hover:-translate-y-3 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] hover:bg-gradient-to-br hover:from-white/15 hover:via-white/12 hover:to-white/8 hover:border-white/40 hover:border-safari-gold/30 cursor-pointer"
             >
-              <!-- Image Container -->
-              <div class="relative h-64 overflow-hidden">
-                <img
-                  :src="safari.image"
-                  :alt="safari.title"
-                  class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  loading="lazy"
-                />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
-                
-                <!-- Badge -->
-                <div class="absolute left-6 top-6 z-10">
-                  <span class="inline-flex items-center rounded-full bg-safari-gold px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-charcoal shadow-glow-gold backdrop-blur-sm">
-                    {{ safari.badge || 'Signature' }}
-                  </span>
-                </div>
-
-                <!-- Meta Info Overlay -->
-                <div class="absolute inset-x-6 bottom-6">
-                  <div class="flex items-center gap-3 text-sm font-semibold text-white">
-                    <span v-if="safari.duration_days" class="flex items-center gap-1.5">
-                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              <!-- Image Container with Slider -->
+              <div class="relative h-64 overflow-hidden" @click.stop>
+                <div class="relative h-full w-full">
+                  <!-- Images Slider -->
+                  <div 
+                    v-for="(img, imgIndex) in (safari.images || [safari.image])" 
+                    :key="imgIndex"
+                    class="absolute inset-0 transition-opacity duration-500"
+                    :class="getSafariImageIndex(safari, index) === imgIndex ? 'opacity-100 z-0' : 'opacity-0 z-0 pointer-events-none'"
+                  >
+                    <img
+                      :src="img"
+                      :alt="`${safari.title} - Image ${imgIndex + 1}`"
+                      class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                  </div>
+                  
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-10"></div>
+                  
+                  <!-- Navigation Arrows (only show if multiple images) -->
+                  <template v-if="(safari.images || [safari.image]).length > 1">
+                    <button
+                      @click.stop="prevSafariImage(index)"
+                      class="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-all opacity-0 group-hover:opacity-100"
+                      aria-label="Previous image"
+                    >
+                      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                       </svg>
-                      {{ safari.duration_days }} days
-                    </span>
-                    <span v-if="safari.difficulty" class="flex items-center gap-1.5">
-                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                    </button>
+                    <button
+                      @click.stop="nextSafariImage(index)"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-all opacity-0 group-hover:opacity-100"
+                      aria-label="Next image"
+                    >
+                      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                       </svg>
-                      {{ safari.difficulty }}
+                    </button>
+                    
+                    <!-- Image Indicators -->
+                    <div class="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        v-for="(img, imgIdx) in (safari.images || [safari.image])"
+                        :key="imgIdx"
+                        @click.stop="setSafariImageIndex(index, imgIdx)"
+                        class="h-1.5 rounded-full transition-all"
+                        :class="getSafariImageIndex(safari, index) === imgIdx ? 'w-6 bg-safari-gold' : 'w-1.5 bg-white/40 hover:bg-white/60'"
+                        :aria-label="`Go to image ${imgIdx + 1}`"
+                      ></button>
+                    </div>
+                  </template>
+                  
+                  <!-- Badge -->
+                  <div class="absolute left-6 top-6 z-20">
+                    <span class="inline-flex items-center rounded-full bg-safari-gold px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-charcoal shadow-glow-gold backdrop-blur-sm">
+                      {{ safari.badge || 'Signature' }}
                     </span>
                   </div>
-                  <p v-if="safari.meta" class="mt-2 text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold/90" v-html="safari.meta"></p>
+
+                  <!-- Meta Info Overlay -->
+                  <div class="absolute inset-x-6 bottom-6 z-20">
+                    <div class="flex items-center gap-3 text-sm font-semibold text-white">
+                      <span v-if="safari.duration_days" class="flex items-center gap-1.5">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        {{ safari.duration_days }} days
+                      </span>
+                      <span v-if="safari.difficulty" class="flex items-center gap-1.5">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                        </svg>
+                        {{ safari.difficulty }}
+                      </span>
+                    </div>
+                    <p v-if="safari.meta" class="mt-2 text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold/90" v-html="safari.meta"></p>
+                  </div>
                 </div>
               </div>
 

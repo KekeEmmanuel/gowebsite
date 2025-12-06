@@ -65,6 +65,9 @@ class ItineraryController extends Controller
             'display_order' => 'nullable|integer|min:0',
             'is_featured' => 'boolean',
             'published_at' => 'nullable|date',
+            'hero_image' => 'nullable|image|max:10240',
+            'gallery_images' => 'nullable|array',
+            'gallery_images.*' => 'image|max:10240',
         ]);
 
         // Handle image_base64
@@ -79,6 +82,20 @@ class ItineraryController extends Controller
         }
 
         $itinerary = Itinerary::create($validated);
+
+        // Handle hero image upload
+        if ($request->hasFile('hero_image')) {
+            $itinerary->addMediaFromRequest('hero_image')
+                ->toMediaCollection('hero');
+        }
+
+        // Handle gallery images
+        if ($request->hasFile('gallery_images')) {
+            foreach ($request->file('gallery_images') as $file) {
+                $itinerary->addMedia($file)
+                    ->toMediaCollection('gallery');
+            }
+        }
 
         return redirect()->route('admin.itineraries.index')
             ->with('success', 'Itinerary created successfully.');
@@ -132,6 +149,10 @@ class ItineraryController extends Controller
             'display_order' => 'nullable|integer|min:0',
             'is_featured' => 'boolean',
             'published_at' => 'nullable|date',
+            'hero_image' => 'nullable|image|max:10240',
+            'gallery_images' => 'nullable|array',
+            'gallery_images.*' => 'image|max:10240',
+            'delete_gallery_images' => 'nullable|array',
         ]);
 
         // Handle image_base64
@@ -148,6 +169,31 @@ class ItineraryController extends Controller
         }
 
         $itinerary->update($validated);
+
+        // Handle hero image upload
+        if ($request->hasFile('hero_image')) {
+            $itinerary->clearMediaCollection('hero');
+            $itinerary->addMediaFromRequest('hero_image')
+                ->toMediaCollection('hero');
+        }
+
+        // Handle gallery images
+        if ($request->hasFile('gallery_images')) {
+            foreach ($request->file('gallery_images') as $file) {
+                $itinerary->addMedia($file)
+                    ->toMediaCollection('gallery');
+            }
+        }
+
+        // Handle gallery image deletions
+        if ($request->has('delete_gallery_images')) {
+            $mediaIds = is_array($request->delete_gallery_images) 
+                ? $request->delete_gallery_images 
+                : [$request->delete_gallery_images];
+            foreach ($mediaIds as $mediaId) {
+                $itinerary->media()->where('id', $mediaId)->delete();
+            }
+        }
 
         return redirect()->route('admin.itineraries.index')
             ->with('success', 'Itinerary updated successfully.');
