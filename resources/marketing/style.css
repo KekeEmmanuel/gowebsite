@@ -6,11 +6,15 @@
 
 @layer base {
   body {
-    @apply font-body text-charcoal bg-white antialiased;
+    @apply font-body text-charcoal antialiased m-0 p-0;
     font-feature-settings: 'kern' 1, 'liga' 1;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  
+  html {
+    @apply m-0 p-0;
   }
 
   html {

@@ -619,7 +619,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
 </script>
 
 <template>
-  <div class="min-h-screen bg-white text-charcoal">
+  <div class="min-h-screen text-charcoal m-0 p-0">
     <header 
       class="fixed top-0 left-0 right-0 z-50 pt-4 pb-4 transition-transform duration-300"
       :class="showNavbar ? 'translate-y-0' : '-translate-y-full'"
@@ -692,9 +692,9 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
       </div>
     </header>
 
-    <main>
-      <section id="home" class="relative">
-        <div class="relative h-[85vh] min-h-[600px]">
+    <main class="pt-0 m-0">
+      <section id="home" class="relative m-0">
+        <div class="relative h-screen min-h-[600px] m-0">
           <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-gray-900">
             <div class="text-center text-white">
               <div class="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
@@ -787,74 +787,121 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
         </div>
       </section>
 
+      <!-- Smooth transition curve from hero -->
+      <div class="relative -mt-1 h-24 overflow-hidden bg-gradient-to-b from-black/20 via-safari-sand/40 to-white">
+        <svg class="absolute bottom-0 w-full" viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+          <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="white"/>
+        </svg>
+      </div>
+
       <section
         ref="featureSection"
         :class="[
-          'relative overflow-hidden bg-gradient-to-b from-safari-sand/30 via-white to-safari-sand/20 py-24 transition-all duration-700 ease-out',
+          'relative overflow-hidden bg-gradient-to-b from-white via-safari-sand/5 to-white py-20 sm:py-28 transition-all duration-700 ease-out',
           featureVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10',
         ]"
       >
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(217,154,56,0.08),transparent_50%)]"></div>
-        <div class="relative mx-auto max-w-5xl px-6 text-center">
-          <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold mb-4">
-            Our Promise
-          </p>
-          <h2 class="mt-3 text-4xl font-heading font-bold text-charcoal sm:text-5xl lg:text-6xl text-balance">
-            {{ featureSectionTitle }}
-          </h2>
-          <p class="mt-6 text-lg leading-relaxed text-charcoal/75 max-w-2xl mx-auto">
-            {{ featureSectionSubtitle }}
-          </p>
+        <!-- Very faded background image -->
+        <div class="absolute inset-0 opacity-[0.15]">
+          <img
+            src="/images/safari/wildlife-savannah.jpg"
+            alt=""
+            class="h-full w-full object-cover object-center"
+            loading="lazy"
+          />
+          <div class="absolute inset-0 bg-gradient-to-b from-white/30 via-white/15 to-white/30"></div>
         </div>
-        <div class="relative mx-auto mt-16 grid max-w-7xl gap-8 px-6 md:grid-cols-3">
-          <article
-            v-for="(feature, index) in featureCards"
-            :key="feature.title"
-            class="group relative rounded-3xl border border-safari-sand/50 bg-white/90 backdrop-blur-sm p-10 text-center transition-all duration-500 ease-out shadow-soft hover:-translate-y-2 hover:shadow-large hover:border-safari-gold/40"
-            :class="featureVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'"
-            :style="{ transitionDelay: featureVisible ? `${index * 120}ms` : '0ms' }"
-            @mouseenter="feature.icon === 'travellers' && boostTravellerCount()"
-            @mouseleave="feature.icon === 'travellers' && settleTravellerCount()"
-          >
-            <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-safari-gold/5 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
-            <div class="relative mx-auto flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-safari-gold/60 bg-gradient-to-br from-safari-gold/10 to-transparent text-safari-gold shadow-medium transition-all duration-300 group-hover:scale-110 group-hover:border-safari-gold group-hover:shadow-glow-gold">
-              <component :is="getFeatureIcon(feature.icon)" />
-            </div>
-            <template v-if="feature.icon === 'travellers'">
-              <p class="mt-8 text-5xl font-heading font-bold text-safari-green">
-                {{ travellerCount.toLocaleString() }}
-                <span class="text-3xl font-bold text-safari-gold">+</span>
+        
+        <!-- Enhanced background patterns -->
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(217,154,56,0.06),transparent_60%)]"></div>
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(31,59,43,0.03),transparent_60%)]"></div>
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 h-px w-3/4 bg-gradient-to-r from-transparent via-safari-gold/20 to-transparent"></div>
+        
+        <div class="relative mx-auto max-w-6xl px-6">
+          <!-- Header with improved spacing and visual hierarchy -->
+          <div class="text-center mb-16 sm:mb-20">
+            <div class="inline-flex items-center gap-3 mb-6">
+              <div class="h-px w-12 bg-gradient-to-r from-transparent to-safari-gold/60"></div>
+              <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
+                Our Promise
               </p>
-              <h3 class="mt-3 text-xl font-semibold tracking-tight text-charcoal">
-                {{ feature.title }}
-              </h3>
-            </template>
-            <template v-else>
-              <h3 class="mt-8 text-xl font-semibold tracking-tight text-charcoal">
-                {{ feature.title }}
-              </h3>
-            </template>
-            <div class="mx-auto mt-4 h-0.5 w-16 bg-gradient-to-r from-transparent via-safari-gold to-transparent"></div>
-            <p class="mt-6 text-base leading-relaxed text-charcoal/75">
-              {{ feature.copy }}
+              <div class="h-px w-12 bg-gradient-to-l from-transparent to-safari-gold/60"></div>
+            </div>
+            <h2 class="mt-4 text-4xl font-heading font-bold text-charcoal sm:text-5xl lg:text-6xl text-balance leading-tight">
+              {{ featureSectionTitle }}
+            </h2>
+            <p class="mt-6 text-lg sm:text-xl leading-relaxed text-charcoal/70 max-w-3xl mx-auto">
+              {{ featureSectionSubtitle }}
             </p>
-          </article>
+          </div>
+
+          <!-- Redesigned feature cards with better integration -->
+          <div class="relative mx-auto grid max-w-7xl gap-6 sm:gap-8 px-6 md:grid-cols-3">
+            <article
+              v-for="(feature, index) in featureCards"
+              :key="feature.title"
+              class="group relative rounded-2xl sm:rounded-3xl border border-safari-sand/30 bg-white/95 backdrop-blur-md p-8 sm:p-10 text-center transition-all duration-500 ease-out shadow-sm hover:-translate-y-3 hover:shadow-2xl hover:shadow-safari-gold/20 hover:border-safari-gold/50"
+              :class="featureVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'"
+              :style="{ transitionDelay: featureVisible ? `${index * 120}ms` : '0ms' }"
+              @mouseenter="feature.icon === 'travellers' && boostTravellerCount()"
+              @mouseleave="feature.icon === 'travellers' && settleTravellerCount()"
+            >
+              <!-- Enhanced gradient overlay -->
+              <div class="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-safari-gold/8 via-transparent to-safari-green/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+              
+              <!-- Icon container with improved design -->
+              <div class="relative mx-auto flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-xl sm:rounded-2xl border-2 border-safari-gold/40 bg-gradient-to-br from-safari-gold/5 via-white to-safari-sand/10 text-safari-gold shadow-md transition-all duration-300 group-hover:scale-110 group-hover:border-safari-gold group-hover:shadow-lg group-hover:shadow-safari-gold/30 group-hover:bg-gradient-to-br group-hover:from-safari-gold/10 group-hover:via-white group-hover:to-safari-gold/5">
+                <component :is="getFeatureIcon(feature.icon)" />
+              </div>
+              
+              <!-- Content -->
+              <template v-if="feature.icon === 'travellers'">
+                <p class="mt-6 sm:mt-8 text-4xl sm:text-5xl font-heading font-bold text-safari-green transition-transform duration-300 group-hover:scale-105">
+                  {{ travellerCount.toLocaleString() }}
+                  <span class="text-2xl sm:text-3xl font-bold text-safari-gold">+</span>
+                </p>
+                <h3 class="mt-4 text-xl sm:text-2xl font-semibold tracking-tight text-charcoal">
+                  {{ feature.title }}
+                </h3>
+              </template>
+              <template v-else>
+                <h3 class="mt-6 sm:mt-8 text-xl sm:text-2xl font-semibold tracking-tight text-charcoal">
+                  {{ feature.title }}
+                </h3>
+              </template>
+              
+              <!-- Decorative divider -->
+              <div class="mx-auto mt-5 sm:mt-6 h-0.5 w-20 bg-gradient-to-r from-transparent via-safari-gold/60 to-transparent transition-all duration-300 group-hover:w-24 group-hover:via-safari-gold"></div>
+              
+              <p class="mt-5 sm:mt-6 text-sm sm:text-base leading-relaxed text-charcoal/70">
+                {{ feature.copy }}
+              </p>
+              
+              <!-- Subtle bottom accent -->
+              <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-0 bg-gradient-to-r from-safari-gold to-safari-green transition-all duration-500 group-hover:w-3/4 rounded-full"></div>
+            </article>
+          </div>
         </div>
       </section>
 
-      <section id="about" class="relative overflow-hidden bg-gradient-to-b from-white via-safari-sand/10 to-white py-28">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(217,154,56,0.06),transparent_50%)]"></div>
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(31,59,43,0.04),transparent_50%)]"></div>
+      <section id="about" class="relative overflow-hidden bg-gradient-to-b from-white via-safari-sand/10 to-white py-24 sm:py-32">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(217,154,56,0.08),transparent_60%)]"></div>
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(31,59,43,0.05),transparent_60%)]"></div>
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 h-px w-3/4 bg-gradient-to-r from-transparent via-safari-gold/20 to-transparent"></div>
         <div class="relative mx-auto max-w-7xl px-6">
-          <div class="grid gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+          <div class="grid gap-12 lg:gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
             <div class="space-y-6">
-              <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
-                Authentic Tanzanian Expertise
-              </p>
+              <div class="inline-flex items-center gap-3">
+                <div class="h-px w-12 bg-gradient-to-r from-transparent to-safari-gold/60"></div>
+                <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
+                  Authentic Tanzanian Expertise
+                </p>
+                <div class="h-px w-12 bg-gradient-to-l from-transparent to-safari-gold/60"></div>
+              </div>
               <h2 class="text-4xl font-heading font-bold text-charcoal leading-tight sm:text-5xl lg:text-6xl text-balance">
                 Journeys designed by locals who live, breathe, and protect Tanzania
               </h2>
-              <p class="text-lg leading-relaxed text-charcoal/75 max-w-2xl">
+              <p class="text-lg sm:text-xl leading-relaxed text-charcoal/75 max-w-2xl">
                 We move beyond brochure itineraries. Our Dar es Salaam and Arusha teams collaborate daily
                 with guides, lodge owners, and conservation partners to secure privileged access and real-time
                 intelligence. The result: safaris that feel effortless, immersive, and entirely your own.
@@ -862,51 +909,58 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
               <div class="flex flex-wrap gap-4 pt-4">
                 <a
                   href="#contact"
-                  class="group rounded-full bg-safari-green px-8 py-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-charcoal hover:shadow-glow-green hover:scale-105"
+                  class="group relative overflow-hidden rounded-full bg-gradient-to-r from-safari-green to-safari-green/90 px-8 py-4 text-sm font-semibold text-white transition-all duration-300 hover:from-charcoal hover:to-charcoal/90 hover:shadow-xl hover:shadow-safari-green/30 hover:scale-105"
                 >
-                  Speak to a Journey Architect
-                  <span class="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
+                  <span class="relative z-10 flex items-center">
+                    Speak to a Journey Architect
+                    <span class="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
+                  </span>
                 </a>
                 <a
                   href="#safaris"
-                  class="group rounded-full border-2 border-safari-green bg-white/50 backdrop-blur-sm px-8 py-4 text-sm font-semibold text-safari-green transition-all duration-300 hover:bg-safari-green hover:text-white hover:shadow-medium"
+                  class="group rounded-full border-2 border-safari-green bg-white/80 backdrop-blur-sm px-8 py-4 text-sm font-semibold text-safari-green transition-all duration-300 hover:bg-safari-green hover:text-white hover:shadow-lg hover:shadow-safari-green/20 hover:scale-105"
                 >
                   View Sample Safaris
                   <span class="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
                 </a>
               </div>
             </div>
-            <div class="rounded-3xl glass border-safari-sand/30 p-10 shadow-large">
-              <ul class="grid gap-6 sm:grid-cols-3 lg:grid-cols-1">
+            <div class="rounded-2xl sm:rounded-3xl border border-safari-sand/30 bg-gradient-to-br from-white/90 via-white/80 to-white/70 backdrop-blur-md p-8 sm:p-10 shadow-xl transition-all duration-300 hover:border-safari-gold/40 hover:shadow-2xl">
+              <ul class="grid gap-5 sm:gap-6 sm:grid-cols-3 lg:grid-cols-1">
                 <li
                   v-for="stat in aboutStats"
                   :key="stat.label"
-                  class="group rounded-2xl bg-gradient-to-br from-safari-sand/40 to-safari-sand/20 px-8 py-6 text-center transition-all duration-300 hover:shadow-medium hover:scale-105"
+                  class="group relative rounded-xl sm:rounded-2xl bg-gradient-to-br from-safari-sand/30 via-safari-sand/20 to-safari-sand/10 px-6 sm:px-8 py-5 sm:py-6 text-center transition-all duration-300 hover:shadow-lg hover:scale-105 hover:from-safari-gold/10 hover:via-safari-sand/20 hover:to-safari-sand/10"
                 >
-                  <p class="text-4xl font-heading font-bold text-safari-green">{{ stat.value }}</p>
+                  <p class="text-3xl sm:text-4xl font-heading font-bold text-safari-green transition-transform duration-300 group-hover:scale-110">{{ stat.value }}</p>
                   <p class="mt-3 text-xs font-semibold uppercase tracking-[0.25em] text-charcoal/70" v-html="stat.label"></p>
+                  <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-0 bg-gradient-to-r from-safari-gold to-transparent transition-all duration-300 group-hover:w-full rounded-full"></div>
                 </li>
               </ul>
-              <div class="mt-10 rounded-2xl border border-safari-gold/20 bg-gradient-to-br from-safari-gold/5 to-transparent p-8">
-                <p class="text-sm font-bold uppercase tracking-[0.35em] text-safari-gold">Accreditations</p>
-                <p class="mt-4 text-sm leading-relaxed text-charcoal/80">
+              <div class="mt-8 sm:mt-10 rounded-xl sm:rounded-2xl border border-safari-gold/30 bg-gradient-to-br from-safari-gold/8 via-safari-gold/5 to-transparent p-7 sm:p-8 transition-all duration-300 hover:border-safari-gold/50 hover:shadow-lg">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="h-px flex-1 bg-gradient-to-r from-safari-gold/60 to-transparent"></div>
+                  <p class="text-sm font-bold uppercase tracking-[0.35em] text-safari-gold">Accreditations</p>
+                  <div class="h-px flex-1 bg-gradient-to-l from-safari-gold/60 to-transparent"></div>
+                </div>
+                <p class="text-sm leading-relaxed text-charcoal/80">
                   Proud members of the Tanzania Association of Tour Operators (TATO), ATTA, and Leave No Trace. We
                   hand-select suppliers championing eco-conscious luxury.
                 </p>
               </div>
             </div>
           </div>
-          <div class="mt-20 grid gap-8 md:grid-cols-3">
+          <div class="mt-16 sm:mt-20 grid gap-6 sm:gap-8 md:grid-cols-3">
             <article
               v-for="highlight in aboutHighlights"
               :key="highlight.title"
-              class="group relative rounded-3xl border border-safari-sand/40 glass p-8 transition-all duration-500 hover:-translate-y-3 hover:border-safari-gold/60 hover:shadow-large"
+              class="group relative rounded-2xl sm:rounded-3xl border border-safari-sand/30 bg-gradient-to-br from-white/90 via-white/80 to-white/70 backdrop-blur-md p-7 sm:p-8 transition-all duration-500 hover:-translate-y-2 hover:border-safari-gold/50 hover:shadow-2xl hover:shadow-safari-gold/10"
             >
-              <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-safari-gold/5 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
-              <div class="relative inline-flex rounded-full bg-gradient-to-r from-safari-gold/10 to-safari-gold/5 border border-safari-gold/20 px-5 py-2 text-xs font-bold uppercase tracking-[0.3em] text-safari-green">
+              <div class="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-safari-gold/8 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+              <div class="relative inline-flex rounded-full bg-gradient-to-r from-safari-gold/15 to-safari-gold/8 border border-safari-gold/30 px-5 py-2 text-xs font-bold uppercase tracking-[0.3em] text-safari-green shadow-sm transition-all duration-300 group-hover:border-safari-gold/50 group-hover:shadow-md">
                 Core Pillar
               </div>
-              <h3 class="mt-6 text-2xl font-heading font-bold text-charcoal">{{ highlight.title }}</h3>
+              <h3 class="mt-6 text-xl sm:text-2xl font-heading font-bold text-charcoal transition-transform duration-300 group-hover:scale-105">{{ highlight.title }}</h3>
               <p class="mt-4 text-base leading-relaxed text-charcoal/75">
                 {{ highlight.copy }}
               </p>
@@ -914,6 +968,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                 Learn More
                 <span aria-hidden="true" class="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </div>
+              <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-0 bg-gradient-to-r from-safari-gold to-safari-green transition-all duration-500 group-hover:w-3/4 rounded-full"></div>
             </article>
           </div>
         </div>
@@ -930,15 +985,19 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
         
         <div class="relative mx-auto max-w-7xl px-6">
           <!-- Header Section -->
-          <div class="mb-20 text-center">
-            <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold mb-6">
-              Signature Safaris
-            </p>
-            <h2 class="text-5xl font-heading font-bold text-white leading-tight sm:text-6xl lg:text-7xl mb-8 text-balance">
+          <div class="mb-16 sm:mb-20 text-center">
+            <div class="inline-flex items-center gap-3 mb-6">
+              <div class="h-px w-12 bg-gradient-to-r from-transparent to-safari-gold/60"></div>
+              <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
+                Signature Safaris
+              </p>
+              <div class="h-px w-12 bg-gradient-to-l from-transparent to-safari-gold/60"></div>
+            </div>
+            <h2 class="text-4xl sm:text-5xl font-heading font-bold text-white leading-tight lg:text-6xl xl:text-7xl mb-6 sm:mb-8 text-balance">
               Preview a few of our most-requested<br />
               <span class="text-safari-gold">tailored itineraries</span>
             </h2>
-            <p class="mx-auto max-w-3xl text-xl leading-relaxed text-white/90">
+            <p class="mx-auto max-w-3xl text-lg sm:text-xl leading-relaxed text-white/90">
               Every journey is individually reimagined around your pace, interests, and travel style. Use these curated
               blueprints as inspiration—our team refines them into a completely bespoke adventure.
             </p>
@@ -950,7 +1009,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
               v-for="(safari, index) in safariPackages"
               :key="safari.id || safari.title || index"
               @click="() => safari.slug && $router.push(`/itineraries/${safari.slug}`)"
-              class="group relative flex flex-col overflow-hidden rounded-3xl glass-dark border border-white/20 shadow-large transition-all duration-500 hover:-translate-y-4 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] hover:bg-white/15 hover:border-white/30 cursor-pointer"
+              class="group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/8 to-white/5 backdrop-blur-md shadow-xl transition-all duration-500 hover:-translate-y-3 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] hover:bg-gradient-to-br hover:from-white/15 hover:via-white/12 hover:to-white/8 hover:border-white/40 hover:border-safari-gold/30 cursor-pointer"
             >
               <!-- Image Container -->
               <div class="relative h-64 overflow-hidden">
@@ -1057,39 +1116,48 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
           </div>
 
           <!-- CTA Section -->
-          <div class="mt-20 text-center">
+          <div class="mt-16 sm:mt-20 text-center">
             <a
               href="#contact"
-              class="group inline-flex items-center gap-3 rounded-full bg-safari-gold px-10 py-5 text-base font-bold text-charcoal transition-all duration-300 hover:bg-safari-gold-light hover:shadow-glow-gold hover:scale-105"
+              class="group relative overflow-hidden inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-safari-gold via-safari-gold/95 to-orange-500 px-8 sm:px-10 py-4 sm:py-5 text-sm sm:text-base font-bold text-charcoal shadow-lg transition-all duration-300 hover:from-safari-gold-light hover:via-safari-gold hover:to-orange-400 hover:shadow-2xl hover:shadow-safari-gold/40 hover:scale-105"
             >
-              Plan Your Custom Safari
-              <svg class="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-              </svg>
+              <span class="relative z-10 flex items-center">
+                Plan Your Custom Safari
+                <svg class="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+              </span>
+              <div class="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
             </a>
           </div>
         </div>
       </section>
 
-      <section id="destinations" class="relative overflow-hidden bg-gradient-to-b from-white via-safari-sand/10 to-white py-28">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(217,154,56,0.05),transparent_50%)]"></div>
+      <section id="destinations" class="relative overflow-hidden bg-gradient-to-b from-white via-safari-sand/10 to-white py-24 sm:py-32">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_30%,rgba(217,154,56,0.06),transparent_60%)]"></div>
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_80%,rgba(31,59,43,0.04),transparent_60%)]"></div>
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 h-px w-3/4 bg-gradient-to-r from-transparent via-safari-gold/20 to-transparent"></div>
         <div class="relative mx-auto max-w-7xl px-6">
-          <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between mb-16">
-            <div class="space-y-4">
-              <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
-                Iconic Destinations
-              </p>
+          <div class="flex flex-col gap-6 sm:gap-8 lg:flex-row lg:items-end lg:justify-between mb-12 sm:mb-16">
+            <div class="space-y-4 sm:space-y-5">
+              <div class="inline-flex items-center gap-3">
+                <div class="h-px w-12 bg-gradient-to-r from-transparent to-safari-gold/60"></div>
+                <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
+                  Iconic Destinations
+                </p>
+                <div class="h-px w-12 bg-gradient-to-l from-transparent to-safari-gold/60"></div>
+              </div>
               <h2 class="text-4xl font-heading font-bold text-charcoal leading-tight sm:text-5xl lg:text-6xl text-balance">
                 Choose the landscapes that speak to your sense of wonder
               </h2>
-              <p class="max-w-2xl text-lg leading-relaxed text-charcoal/75">
+              <p class="max-w-2xl text-lg sm:text-xl leading-relaxed text-charcoal/75">
                 We orchestrate seamless multi-region journeys that stitch together the north's wildlife circuits,
                 the remote south, and island escapes. Each region unlocks new textures, cultures, and wildlife moments.
               </p>
             </div>
             <a
               href="#lodges"
-              class="group inline-flex items-center gap-3 self-start rounded-full border-2 border-safari-green bg-white/50 backdrop-blur-sm px-8 py-4 text-sm font-semibold text-safari-green transition-all duration-300 hover:bg-safari-green hover:text-white hover:shadow-medium hover:scale-105"
+              class="group inline-flex items-center gap-3 self-start rounded-full border-2 border-safari-green bg-white/80 backdrop-blur-sm px-7 sm:px-8 py-3.5 sm:py-4 text-sm font-semibold text-safari-green transition-all duration-300 hover:bg-safari-green hover:text-white hover:shadow-lg hover:shadow-safari-green/20 hover:scale-105"
             >
               Explore Our Lodge Collection
               <span aria-hidden="true" class="transition-transform duration-300 group-hover:translate-x-1">→</span>
@@ -1129,61 +1197,70 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
         </div>
       </section>
 
-      <section id="lodges" class="relative overflow-hidden bg-gradient-to-b from-safari-sand/20 via-white to-safari-sand/10 py-28">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(31,59,43,0.04),transparent_50%)]"></div>
+      <section id="lodges" class="relative overflow-hidden bg-gradient-to-b from-safari-sand/20 via-white to-safari-sand/10 py-24 sm:py-32">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_80%,rgba(31,59,43,0.05),transparent_60%)]"></div>
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_20%,rgba(217,154,56,0.04),transparent_60%)]"></div>
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 h-px w-3/4 bg-gradient-to-r from-transparent via-safari-gold/20 to-transparent"></div>
         <div class="relative mx-auto max-w-7xl px-6">
-          <div class="grid gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-            <div class="space-y-8">
-              <div class="space-y-6">
-                <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
-                  Lodges &amp; Camps
-                </p>
+          <div class="grid gap-12 sm:gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+            <div class="space-y-6 sm:space-y-8">
+              <div class="space-y-5 sm:space-y-6">
+                <div class="inline-flex items-center gap-3">
+                  <div class="h-px w-12 bg-gradient-to-r from-transparent to-safari-gold/60"></div>
+                  <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
+                    Lodges &amp; Camps
+                  </p>
+                  <div class="h-px w-12 bg-gradient-to-l from-transparent to-safari-gold/60"></div>
+                </div>
                 <h2 class="text-4xl font-heading font-bold text-charcoal leading-tight sm:text-5xl lg:text-6xl text-balance">
                   Hand-selected stays that marry safari romance with elevated comfort
                 </h2>
-                <p class="text-lg leading-relaxed text-charcoal/75">
+                <p class="text-lg sm:text-xl leading-relaxed text-charcoal/75">
                   From treehouse suites and star-bed sleepouts to oceanfront sanctuaries, we recommend properties that align
                   with your style—whether that is contemporary design, authentic bushcraft, or family-friendly amenities.
                 </p>
               </div>
-              <ul class="space-y-5 text-base text-charcoal/80">
-                <li class="flex gap-4">
-                  <span class="mt-1.5 inline-flex h-2 w-2 flex-none rounded-full bg-safari-gold"></span>
+              <ul class="space-y-4 sm:space-y-5 text-base text-charcoal/80">
+                <li class="flex gap-4 group/item">
+                  <span class="mt-1.5 inline-flex h-2 w-2 flex-none rounded-full bg-safari-gold transition-all duration-300 group-hover/item:scale-125 group-hover/item:shadow-sm"></span>
                   <span>Exclusive-use villas, honeymoon retreats, and multi-generational residences.</span>
                 </li>
-                <li class="flex gap-4">
-                  <span class="mt-1.5 inline-flex h-2 w-2 flex-none rounded-full bg-safari-gold"></span>
+                <li class="flex gap-4 group/item">
+                  <span class="mt-1.5 inline-flex h-2 w-2 flex-none rounded-full bg-safari-gold transition-all duration-300 group-hover/item:scale-125 group-hover/item:shadow-sm"></span>
                   <span>Wellness experiences: bush spas, mindfulness decks, and forest bathing trails.</span>
                 </li>
-                <li class="flex gap-4">
-                  <span class="mt-1.5 inline-flex h-2 w-2 flex-none rounded-full bg-safari-gold"></span>
+                <li class="flex gap-4 group/item">
+                  <span class="mt-1.5 inline-flex h-2 w-2 flex-none rounded-full bg-safari-gold transition-all duration-300 group-hover/item:scale-125 group-hover/item:shadow-sm"></span>
                   <span>Conservation levies and community visits woven into every stay.</span>
                 </li>
               </ul>
               <div class="flex flex-wrap gap-4 pt-4">
                 <a
                   href="#contact"
-                  class="group rounded-full bg-safari-green px-8 py-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-charcoal hover:shadow-glow-green hover:scale-105"
+                  class="group relative overflow-hidden rounded-full bg-gradient-to-r from-safari-green to-safari-green/90 px-7 sm:px-8 py-3.5 sm:py-4 text-sm font-semibold text-white transition-all duration-300 hover:from-charcoal hover:to-charcoal/90 hover:shadow-xl hover:shadow-safari-green/30 hover:scale-105"
                 >
-                  Request Availability
-                  <span class="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
+                  <span class="relative z-10 flex items-center">
+                    Request Availability
+                    <span class="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
+                  </span>
                 </a>
                 <a
                   href="#contact"
-                  class="group rounded-full border-2 border-safari-green bg-white/50 backdrop-blur-sm px-8 py-4 text-sm font-semibold text-safari-green transition-all duration-300 hover:bg-safari-green hover:text-white hover:shadow-medium"
+                  class="group rounded-full border-2 border-safari-green bg-white/80 backdrop-blur-sm px-7 sm:px-8 py-3.5 sm:py-4 text-sm font-semibold text-safari-green transition-all duration-300 hover:bg-safari-green hover:text-white hover:shadow-lg hover:shadow-safari-green/20 hover:scale-105"
                 >
                   Build a Stay List
                   <span class="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
                 </a>
               </div>
             </div>
-            <div class="grid gap-8 sm:grid-cols-2">
+            <div class="grid gap-6 sm:gap-8 sm:grid-cols-2">
               <article
                 v-for="lodge in signatureLodges"
                 :key="lodge.name"
-                class="group relative overflow-hidden rounded-3xl glass border border-safari-sand/40 shadow-medium transition-all duration-500 hover:-translate-y-3 hover:shadow-large hover:border-safari-gold/40"
+                class="group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-safari-sand/30 bg-gradient-to-br from-white/90 via-white/80 to-white/70 backdrop-blur-md shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:border-safari-gold/50"
               >
-                <div class="relative h-64 overflow-hidden">
+                <div class="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-safari-gold/5 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+                <div class="relative h-56 sm:h-64 overflow-hidden">
                   <img
                     :src="lodge.image"
                     :alt="lodge.name"
@@ -1191,142 +1268,163 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                     loading="lazy"
                   />
                   <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-                  <div class="absolute left-6 top-6 rounded-full glass border border-white/30 px-5 py-2 text-xs font-bold uppercase tracking-[0.3em] text-charcoal shadow-soft">
+                  <div class="absolute left-5 sm:left-6 top-5 sm:top-6 rounded-full bg-white/90 backdrop-blur-sm border border-white/30 px-4 sm:px-5 py-1.5 sm:py-2 text-xs font-bold uppercase tracking-[0.3em] text-charcoal shadow-md transition-all duration-300 group-hover:border-safari-gold/50 group-hover:shadow-lg">
                     {{ lodge.location }}
                   </div>
                 </div>
-                <div class="flex h-full flex-col gap-5 p-8">
-                  <h3 class="text-2xl font-heading font-bold text-charcoal">{{ lodge.name }}</h3>
-                  <p class="text-base leading-relaxed text-charcoal/75" v-html="lodge.mood"></p>
-                  <div class="mt-auto flex items-center justify-between pt-6 border-t border-safari-sand/40 text-sm font-bold uppercase tracking-[0.3em] text-safari-gold transition-all duration-300 group-hover:gap-4">
+                <div class="relative flex h-full flex-col gap-4 sm:gap-5 p-6 sm:p-8">
+                  <h3 class="text-xl sm:text-2xl font-heading font-bold text-charcoal transition-transform duration-300 group-hover:scale-105">{{ lodge.name }}</h3>
+                  <p class="text-sm sm:text-base leading-relaxed text-charcoal/75" v-html="lodge.mood"></p>
+                  <div class="mt-auto flex items-center justify-between pt-5 sm:pt-6 border-t border-safari-sand/40 text-sm font-bold uppercase tracking-[0.3em] text-safari-gold transition-all duration-300 group-hover:gap-4">
                     <span>Inquire</span>
                     <span aria-hidden="true" class="transition-transform duration-300 group-hover:translate-x-1">→</span>
                   </div>
                 </div>
+                <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-0 bg-gradient-to-r from-safari-gold to-safari-green transition-all duration-500 group-hover:w-3/4 rounded-full"></div>
               </article>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="contact" class="relative overflow-hidden bg-gradient-to-b from-charcoal via-charcoal-dark to-charcoal text-white py-32">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(217,154,56,0.08),transparent_70%)]"></div>
-        <div class="absolute inset-y-0 right-0 hidden w-1/2 bg-[url('/images/safari/kelvin-zyteng-gxS48JsmH_0-unsplash.jpg')] bg-cover bg-center opacity-10 lg:block"></div>
+      <section id="contact" class="relative overflow-hidden bg-gradient-to-b from-charcoal via-charcoal-dark to-charcoal text-white py-24 sm:py-32">
+        <!-- Enhanced Background Effects -->
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(217,154,56,0.12),transparent_60%)]"></div>
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(31,59,43,0.08),transparent_60%)]"></div>
+        <div class="absolute inset-y-0 right-0 hidden w-1/2 bg-[url('/images/safari/kelvin-zyteng-gxS48JsmH_0-unsplash.jpg')] bg-cover bg-center opacity-[0.08] lg:block"></div>
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 h-px w-3/4 bg-gradient-to-r from-transparent via-safari-gold/30 to-transparent"></div>
+        
         <div class="relative mx-auto max-w-7xl px-6">
-          <!-- Section Header -->
-          <div class="mb-16 text-center lg:mb-20">
-            <p class="mb-4 text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
-              Start Planning
-            </p>
+          <!-- Modern Section Header -->
+          <div class="mb-16 text-center lg:mb-24">
+            <div class="inline-flex items-center gap-3 mb-6">
+              <div class="h-px w-12 bg-gradient-to-r from-transparent to-safari-gold/60"></div>
+              <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
+                Start Planning
+              </p>
+              <div class="h-px w-12 bg-gradient-to-l from-transparent to-safari-gold/60"></div>
+            </div>
             <h2 class="mx-auto max-w-4xl text-4xl font-heading font-bold text-white leading-tight sm:text-5xl lg:text-6xl text-balance">
               Share your dream safari—we'll craft a tailored itinerary within 24 hours
             </h2>
-            <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/80">
+            <p class="mx-auto mt-6 max-w-2xl text-lg sm:text-xl leading-relaxed text-white/80">
               Tell us who you are travelling with, the wildlife you are eager to witness, and your ideal travel window.
               We will reply with curated route ideas, accommodations, and investment options.
             </p>
           </div>
 
           <!-- Main Content Grid -->
-          <div class="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+          <div class="grid gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
             <!-- Left Column: Contact Info & Quick Facts -->
-            <div class="flex flex-col space-y-8">
-              <!-- Contact Channels -->
-              <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="flex flex-col space-y-6 sm:space-y-8">
+              <!-- Modern Contact Channels -->
+              <div class="grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-1">
                 <div
                   v-for="channel in contactChannels"
                   :key="channel.label"
-                  class="group flex h-full flex-col rounded-3xl border border-white/20 bg-white/5 backdrop-blur-sm p-6 transition-all duration-300 hover:border-safari-gold/60 hover:bg-white/10 hover:shadow-lg hover:shadow-safari-gold/20"
+                  class="group relative flex h-full flex-col rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/8 via-white/5 to-white/3 backdrop-blur-md p-6 sm:p-7 transition-all duration-500 hover:border-safari-gold/50 hover:bg-gradient-to-br hover:from-white/12 hover:via-white/8 hover:to-white/5 hover:shadow-xl hover:shadow-safari-gold/20 hover:-translate-y-1"
                 >
-                  <p class="mb-3 text-xs font-bold uppercase tracking-[0.35em] text-safari-gold">{{ channel.label }}</p>
-                  <p class="mb-auto text-xl font-heading font-bold leading-tight text-white">{{ channel.value }}</p>
-                  <p class="mt-3 text-sm uppercase tracking-[0.2em] leading-relaxed text-white/70" v-html="channel.detail"></p>
+                  <div class="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-safari-gold/5 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+                  <div class="relative">
+                    <p class="mb-3 text-xs font-bold uppercase tracking-[0.35em] text-safari-gold">{{ channel.label }}</p>
+                    <p class="mb-auto text-xl sm:text-2xl font-heading font-bold leading-tight text-white transition-transform duration-300 group-hover:scale-105">{{ channel.value }}</p>
+                    <p class="mt-3 text-sm uppercase tracking-[0.2em] leading-relaxed text-white/70" v-html="channel.detail"></p>
+                  </div>
+                  <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-0 bg-gradient-to-r from-safari-gold to-transparent transition-all duration-500 group-hover:w-full rounded-full"></div>
                 </div>
               </div>
 
-              <!-- Quick Facts -->
-              <div class="rounded-3xl border border-white/20 bg-white/5 backdrop-blur-sm p-8">
-                <p class="mb-6 text-xs font-bold uppercase tracking-[0.35em] text-safari-gold">
-                  Why Choose Us
-                </p>
-                <ul class="space-y-4 text-sm text-white/80">
+              <!-- Enhanced Quick Facts Card -->
+              <div class="rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/8 via-white/5 to-white/3 backdrop-blur-md p-7 sm:p-8 shadow-lg transition-all duration-300 hover:border-safari-gold/40 hover:shadow-xl hover:shadow-safari-gold/10">
+                <div class="flex items-center gap-3 mb-6">
+                  <div class="h-px flex-1 bg-gradient-to-r from-safari-gold/60 to-transparent"></div>
+                  <p class="text-xs font-bold uppercase tracking-[0.35em] text-safari-gold">
+                    Why Choose Us
+                  </p>
+                  <div class="h-px flex-1 bg-gradient-to-l from-safari-gold/60 to-transparent"></div>
+                </div>
+                <ul class="space-y-4 text-sm sm:text-base text-white/80">
                   <li
                     v-for="fact in contactQuickFacts"
                     :key="fact"
-                    class="flex items-start gap-3"
+                    class="flex items-start gap-4 group/item"
                   >
-                    <span class="mt-1.5 inline-flex h-2 w-2 flex-none rounded-full bg-safari-gold shadow-sm"></span>
-                    <span class="leading-relaxed">{{ fact }}</span>
+                    <span class="mt-1.5 inline-flex h-2 w-2 flex-none rounded-full bg-safari-gold shadow-sm transition-all duration-300 group-hover/item:scale-125 group-hover/item:shadow-glow-gold"></span>
+                    <span class="leading-relaxed flex-1">{{ fact }}</span>
                   </li>
                 </ul>
               </div>
 
-              <!-- Location Card -->
-              <div class="rounded-3xl border border-white/20 bg-white/5 backdrop-blur-sm p-8 shadow-medium">
-                <p class="mb-4 text-xs font-bold uppercase tracking-[0.35em] text-safari-gold">
-                  Meet us in person
-                </p>
+              <!-- Enhanced Location Card -->
+              <div class="rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/8 via-white/5 to-white/3 backdrop-blur-md p-7 sm:p-8 shadow-lg transition-all duration-300 hover:border-safari-gold/40 hover:shadow-xl hover:shadow-safari-gold/10">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="h-px flex-1 bg-gradient-to-r from-safari-gold/60 to-transparent"></div>
+                  <p class="text-xs font-bold uppercase tracking-[0.35em] text-safari-gold">
+                    Meet us in person
+                  </p>
+                  <div class="h-px flex-1 bg-gradient-to-l from-safari-gold/60 to-transparent"></div>
+                </div>
                 <p class="mb-6 text-base leading-relaxed text-white/90">
                   Go Tanzania Safari Studio · Sokoine Road, Arusha 23100 · Visits by appointment only
                 </p>
-                <div class="h-48 overflow-hidden rounded-2xl border border-white/20 shadow-soft">
+                <div class="h-48 sm:h-56 overflow-hidden rounded-xl sm:rounded-2xl border border-white/20 shadow-md transition-all duration-300 hover:border-safari-gold/40 hover:shadow-lg group">
                   <iframe
                     title="Go Tanzania Safari Studio Map"
                     src="https://maps.google.com/maps?q=Arusha%2C%20Tanzania&t=&z=13&ie=UTF8&iwloc=&output=embed"
-                    class="h-full w-full opacity-90 grayscale transition-opacity duration-300 hover:opacity-100 hover:grayscale-0"
+                    class="h-full w-full opacity-90 grayscale transition-all duration-500 group-hover:opacity-100 group-hover:grayscale-0"
                     loading="lazy"
                   ></iframe>
                 </div>
               </div>
             </div>
 
-            <!-- Right Column: Contact Form -->
+            <!-- Right Column: Modern Contact Form -->
             <div class="lg:sticky lg:top-8 lg:h-fit">
-              <form class="space-y-6 rounded-3xl border border-white/20 bg-white/5 backdrop-blur-sm p-8 shadow-large sm:p-10">
-                <div class="mb-6">
-                  <h3 class="text-2xl font-heading font-bold text-white">Get in Touch</h3>
-                  <p class="mt-2 text-sm text-white/70">Fill out the form below and we'll get back to you within 24 hours.</p>
+              <form class="space-y-5 sm:space-y-6 rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/8 to-white/5 backdrop-blur-md p-7 sm:p-9 lg:p-10 shadow-2xl transition-all duration-300 hover:border-safari-gold/30 hover:shadow-safari-gold/10">
+                <div class="mb-6 pb-6 border-b border-white/10">
+                  <h3 class="text-2xl sm:text-3xl font-heading font-bold text-white mb-2">Get in Touch</h3>
+                  <p class="text-sm sm:text-base text-white/70">Fill out the form below and we'll get back to you within 24 hours.</p>
                 </div>
 
                 <div class="grid gap-5 sm:grid-cols-2">
-                  <div>
-                    <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="fullname">
+                  <div class="space-y-2">
+                    <label class="block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="fullname">
                       Full Name
                     </label>
                     <input
                       id="fullname"
                       type="text"
                       placeholder="Your full name"
-                      class="mt-2 w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-5 py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50"
+                      class="w-full rounded-xl sm:rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-4 sm:px-5 py-3 sm:py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50 hover:border-white/40"
                     />
                   </div>
-                  <div>
-                    <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="email">
+                  <div class="space-y-2">
+                    <label class="block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="email">
                       Email Address
                     </label>
                     <input
                       id="email"
                       type="email"
                       placeholder="you@example.com"
-                      class="mt-2 w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-5 py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50"
+                      class="w-full rounded-xl sm:rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-4 sm:px-5 py-3 sm:py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50 hover:border-white/40"
                     />
                   </div>
                 </div>
 
                 <div class="grid gap-5 sm:grid-cols-2">
-                  <div>
-                    <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="phone">
+                  <div class="space-y-2">
+                    <label class="block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="phone">
                       Phone / WhatsApp
                     </label>
                     <input
                       id="phone"
                       type="tel"
                       placeholder="+255..."
-                      class="mt-2 w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-5 py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50"
+                      class="w-full rounded-xl sm:rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-4 sm:px-5 py-3 sm:py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50 hover:border-white/40"
                     />
                   </div>
-                  <div>
-                    <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="travelers">
+                  <div class="space-y-2">
+                    <label class="block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="travelers">
                       Travellers
                     </label>
                     <input
@@ -1334,18 +1432,18 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                       type="number"
                       min="1"
                       placeholder="2 adults, 2 kids..."
-                      class="mt-2 w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-5 py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50"
+                      class="w-full rounded-xl sm:rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-4 sm:px-5 py-3 sm:py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50 hover:border-white/40"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="service">
+                <div class="space-y-2">
+                  <label class="block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="service">
                     Experience Type
                   </label>
                   <select
                     id="service"
-                    class="mt-2 w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-5 py-3.5 text-white transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50"
+                    class="w-full rounded-xl sm:rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-4 sm:px-5 py-3 sm:py-3.5 text-white transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50 hover:border-white/40"
                   >
                     <option class="text-charcoal bg-white" value="">Select an experience</option>
                     <option class="text-charcoal bg-white" value="wildlife">Wildlife Safari</option>
@@ -1355,28 +1453,29 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                   </select>
                 </div>
 
-                <div>
-                  <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="message">
+                <div class="space-y-2">
+                  <label class="block text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold" for="message">
                     Tell Us More
                   </label>
                   <textarea
                     id="message"
                     rows="5"
                     placeholder="Preferred travel dates, bucket-list sightings, special celebrations..."
-                    class="mt-2 w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-5 py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50"
+                    class="w-full rounded-xl sm:rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-4 sm:px-5 py-3 sm:py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50 hover:border-white/40 resize-none"
                   ></textarea>
                 </div>
 
                 <button
                   type="submit"
-                  class="group mt-8 w-full rounded-full bg-gradient-to-r from-safari-gold to-orange-500 px-8 py-4 text-sm font-bold text-charcoal shadow-lg transition-all duration-300 hover:from-safari-gold-light hover:to-orange-400 hover:shadow-glow-gold hover:scale-105"
+                  class="group relative mt-6 sm:mt-8 w-full overflow-hidden rounded-full bg-gradient-to-r from-safari-gold via-safari-gold/95 to-orange-500 px-8 py-4 text-sm font-bold text-charcoal shadow-lg transition-all duration-300 hover:from-safari-gold-light hover:via-safari-gold hover:to-orange-400 hover:shadow-2xl hover:shadow-safari-gold/40 hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <span class="flex items-center justify-center">
+                  <span class="relative z-10 flex items-center justify-center">
                     Submit Inquiry
-                    <svg class="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    <svg class="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                     </svg>
                   </span>
+                  <div class="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
                 </button>
               </form>
             </div>
@@ -1385,24 +1484,25 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
       </section>
     </main>
 
-    <footer class="relative bg-gradient-to-b from-white to-safari-sand/20 border-t border-safari-sand/30">
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(217,154,56,0.03),transparent_50%)]"></div>
-      <div class="relative mx-auto max-w-7xl px-6 py-12">
+    <footer class="relative bg-gradient-to-b from-white via-safari-sand/20 to-white border-t border-safari-sand/30">
+      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(217,154,56,0.04),transparent_60%)]"></div>
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 h-px w-3/4 bg-gradient-to-r from-transparent via-safari-gold/20 to-transparent"></div>
+      <div class="relative mx-auto max-w-7xl px-6 py-10 sm:py-12">
         <div class="flex flex-col gap-6 border-t border-safari-sand/40 pt-8 md:flex-row md:items-center md:justify-between">
           <p class="text-base text-charcoal/70">© {{ new Date().getFullYear() }} Go Tanzania Safari Ltd. All rights reserved.</p>
-          <div class="flex gap-6">
-            <a class="text-charcoal/60 transition-all duration-300 hover:text-safari-gold hover:scale-110" href="#" aria-label="Instagram">
-              <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+          <div class="flex gap-5 sm:gap-6">
+            <a class="group relative text-charcoal/60 transition-all duration-300 hover:text-safari-gold hover:scale-110" href="#" aria-label="Instagram">
+              <svg class="h-5 w-5 transition-transform duration-300 group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
               </svg>
             </a>
-            <a class="text-charcoal/60 transition-all duration-300 hover:text-safari-gold hover:scale-110" href="#" aria-label="Facebook">
-              <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+            <a class="group relative text-charcoal/60 transition-all duration-300 hover:text-safari-gold hover:scale-110" href="#" aria-label="Facebook">
+              <svg class="h-5 w-5 transition-transform duration-300 group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
               </svg>
             </a>
-            <a class="text-charcoal/60 transition-all duration-300 hover:text-safari-gold hover:scale-110" href="#" aria-label="TripAdvisor">
-              <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+            <a class="group relative text-charcoal/60 transition-all duration-300 hover:text-safari-gold hover:scale-110" href="#" aria-label="TripAdvisor">
+              <svg class="h-5 w-5 transition-transform duration-300 group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
               </svg>
             </a>
@@ -1432,3 +1532,4 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
     </button>
   </div>
 </template>
+

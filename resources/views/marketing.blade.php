@@ -6,8 +6,8 @@
         <title>Go Tanzania Safari Ltd</title>
         <link rel="icon" type="image/png" href="/favicon.ico">
     </head>
-    <body class="antialiased bg-white">
-        <div id="marketing-app"></div>
+    <body class="antialiased m-0 p-0 overflow-x-hidden">
+        <div id="marketing-app" class="m-0 p-0 min-h-screen">
         @vite('resources/marketing/main.ts')
     </body>
 </html>

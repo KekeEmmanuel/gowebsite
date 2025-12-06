@@ -104,16 +104,36 @@ onMounted(async () => {
     </header>
 
     <!-- Loading State -->
-    <div v-if="isLoading" class="flex min-h-screen items-center justify-center bg-safari-sand/20">
-      <div class="text-center">
+    <div v-if="isLoading" class="relative flex min-h-screen items-center justify-center overflow-hidden bg-safari-sand/20">
+      <!-- Faded background image -->
+      <div class="absolute inset-0 opacity-[0.15]">
+        <img
+          src="/images/safari/wildlife-herd.jpg"
+          alt=""
+          class="h-full w-full object-cover object-center"
+          loading="lazy"
+        />
+        <div class="absolute inset-0 bg-gradient-to-b from-white/30 via-white/15 to-white/30"></div>
+      </div>
+      <div class="relative z-10 text-center">
         <div class="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-safari-gold border-t-transparent"></div>
         <p class="text-lg font-semibold text-charcoal">Loading itinerary details...</p>
       </div>
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="flex min-h-screen items-center justify-center bg-safari-sand/20 px-6">
-      <div class="max-w-md text-center">
+    <div v-else-if="error" class="relative flex min-h-screen items-center justify-center overflow-hidden bg-safari-sand/20 px-6">
+      <!-- Faded background image -->
+      <div class="absolute inset-0 opacity-[0.15]">
+        <img
+          src="/images/safari/wildlife-giraffe.jpg"
+          alt=""
+          class="h-full w-full object-cover object-center"
+          loading="lazy"
+        />
+        <div class="absolute inset-0 bg-gradient-to-b from-white/30 via-white/15 to-white/30"></div>
+      </div>
+      <div class="relative z-10 max-w-md text-center">
         <h1 class="text-3xl font-heading text-charcoal mb-4">Itinerary Not Found</h1>
         <p class="text-charcoal/70 mb-6">{{ error }}</p>
         <router-link
@@ -129,9 +149,20 @@ onMounted(async () => {
     </div>
 
     <!-- Itinerary Detail Content -->
-    <div v-else-if="itinerary" class="bg-white">
+    <div v-else-if="itinerary" class="relative bg-white">
+      <!-- Faded background image for main content -->
+      <div class="absolute inset-0 opacity-[0.15] pointer-events-none">
+        <img
+          src="/images/safari/wildlife-zebra.jpg"
+          alt=""
+          class="h-full w-full object-cover object-center"
+          loading="lazy"
+        />
+        <div class="absolute inset-0 bg-gradient-to-b from-white/30 via-white/15 to-white/30"></div>
+      </div>
+      
       <!-- Hero Image Section -->
-      <div class="relative h-[60vh] min-h-[500px] overflow-hidden">
+      <div class="relative z-20 h-[60vh] min-h-[500px] overflow-hidden">
         <img
           :src="itinerary.image"
           :alt="itinerary.title"
@@ -190,7 +221,7 @@ onMounted(async () => {
       </div>
 
       <!-- Main Content -->
-      <div class="mx-auto max-w-5xl px-6 py-16">
+      <div class="relative z-10 mx-auto max-w-5xl px-6 py-16">
         <div class="grid gap-12 lg:grid-cols-[2fr_1fr]">
           <!-- Main Content Column -->
           <div class="space-y-12">
