@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Destination;
 use App\Models\Itinerary;
 use App\Models\ServiceType;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -40,8 +41,8 @@ class ItineraryController extends Controller
     public function create(): Response
     {
         return Inertia::render('Admin/Itineraries/Create', [
-            'serviceTypes' => ServiceType::all(),
-            'destinations' => Destination::all(),
+            'serviceTypes' => ServiceType::select('id', 'name')->get(),
+            'destinations' => Destination::select('id', 'name')->get(),
         ]);
     }
 
@@ -89,11 +90,25 @@ class ItineraryController extends Controller
                 ->toMediaCollection('hero');
         }
 
-        // Handle gallery images
-        if ($request->hasFile('gallery_images')) {
-            foreach ($request->file('gallery_images') as $file) {
-                $itinerary->addMedia($file)
-                    ->toMediaCollection('gallery');
+        // Handle gallery images (sent as gallery_images[] array)
+        // When files are sent as gallery_images[], Laravel receives them in allFiles()
+        $allFiles = $request->allFiles();
+        
+        // Check if gallery_images exists in allFiles (this works for array notation)
+        if (isset($allFiles['gallery_images'])) {
+            $galleryFiles = $allFiles['gallery_images'];
+            if (!is_array($galleryFiles)) {
+                $galleryFiles = [$galleryFiles];
+            }
+            foreach ($galleryFiles as $file) {
+                if ($file && $file->isValid()) {
+                    try {
+                        $itinerary->addMedia($file)
+                            ->toMediaCollection('gallery');
+                    } catch (\Exception $e) {
+                        \Log::error('Error adding gallery image: ' . $e->getMessage());
+                    }
+                }
             }
         }
 
@@ -103,6 +118,8 @@ class ItineraryController extends Controller
 
     public function edit(Itinerary $itinerary): Response
     {
+        $itinerary->load('media'); // Eager load media for gallery
+        
         return Inertia::render('Admin/Itineraries/Edit', [
             'itinerary' => [
                 'id' => $itinerary->id,
@@ -122,10 +139,17 @@ class ItineraryController extends Controller
                 'display_order' => $itinerary->display_order,
                 'is_featured' => $itinerary->is_featured,
                 'published_at' => $itinerary->published_at,
-                'image_base64' => $itinerary->image_base64,
+                'hero_image_url' => $itinerary->getFirstMediaUrl('hero'),
+                'gallery_images' => $itinerary->getMedia('gallery')->map(fn ($media) => [
+                    'id' => $media->id,
+                    'url' => $media->getUrl(),
+                    'thumb' => $media->getUrl('thumb'),
+                    'cover' => $media->getUrl('cover'),
+                    'name' => $media->file_name,
+                ])->toArray(),
             ],
-            'serviceTypes' => ServiceType::all(),
-            'destinations' => Destination::all(),
+            'serviceTypes' => ServiceType::select('id', 'name')->get(),
+            'destinations' => Destination::select('id', 'name')->get(),
         ]);
     }
 
@@ -170,18 +194,33 @@ class ItineraryController extends Controller
 
         $itinerary->update($validated);
 
-        // Handle hero image upload
+        // Handle hero image deletion
+        if ($request->has('delete_hero_image') && $request->delete_hero_image) {
+            $itinerary->clearMediaCollection('hero');
+        }
+
+        // Handle hero image upload (after deletion check, so new image can replace deleted one)
         if ($request->hasFile('hero_image')) {
             $itinerary->clearMediaCollection('hero');
             $itinerary->addMediaFromRequest('hero_image')
                 ->toMediaCollection('hero');
         }
 
-        // Handle gallery images
-        if ($request->hasFile('gallery_images')) {
-            foreach ($request->file('gallery_images') as $file) {
-                $itinerary->addMedia($file)
-                    ->toMediaCollection('gallery');
+        // Handle gallery images (sent as gallery_images[] array)
+        // When files are sent as gallery_images[], Laravel receives them differently
+        $allFiles = $request->allFiles();
+        
+        // Check if gallery_images exists in allFiles (this works for array notation)
+        if (isset($allFiles['gallery_images'])) {
+            $galleryFiles = $allFiles['gallery_images'];
+            if (!is_array($galleryFiles)) {
+                $galleryFiles = [$galleryFiles];
+            }
+            foreach ($galleryFiles as $file) {
+                if ($file && $file->isValid()) {
+                    $itinerary->addMedia($file)
+                        ->toMediaCollection('gallery');
+                }
             }
         }
 

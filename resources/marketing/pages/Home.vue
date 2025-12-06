@@ -242,6 +242,8 @@ onMounted(async () => {
           meta: itinerary.meta || `${itinerary.duration_days || ''} days`,
           image: images[0], // First image for backward compatibility
           images: images, // All images for slider
+          gallery: itinerary.gallery || [], // Gallery images array for slider
+          currentImageIndex: 0, // Track current image index for slider
           badge: itinerary.badge || 'Signature Collection',
           highlights: Array.isArray(itinerary.highlights) ? itinerary.highlights : [],
           duration_days: itinerary.duration_days || null,
