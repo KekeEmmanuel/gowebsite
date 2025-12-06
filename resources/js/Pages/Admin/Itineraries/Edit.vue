@@ -5,7 +5,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Textarea from '@/Components/Textarea.vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -24,14 +24,10 @@ const props = defineProps({
 });
 
 const form = useForm({
-    _method: 'put',
     title: props.itinerary.title || '',
     summary: props.itinerary.summary || '',
     badge: props.itinerary.badge || '',
-    hero_image: null,
-    delete_hero_image: false,
-    gallery_images: [],
-    delete_gallery_images: [],
+    image_base64: props.itinerary.image_base64 || null,
     slug: props.itinerary.slug || '',
     service_type_id: props.itinerary.service_type_id || null,
     destination_id: props.itinerary.destination_id || null,
@@ -47,67 +43,18 @@ const form = useForm({
     published_at: props.itinerary.published_at ? props.itinerary.published_at.split(' ')[0] : null,
 });
 
-const heroImagePreview = ref(props.itinerary.hero_image_url || null);
-const existingGalleryImages = ref(props.itinerary.gallery_images || []);
-const newGalleryPreviews = ref([]);
-const originalHeroImageUrl = ref(props.itinerary.hero_image_url || null);
+const imagePreview = ref(props.itinerary.image_base64 || null);
 
-const handleHeroImageChange = (event) => {
+const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-        heroImagePreview.value = URL.createObjectURL(file);
-        form.hero_image = file;
-        form.delete_hero_image = false; // Reset delete flag if new image is selected
-    } else {
-        heroImagePreview.value = originalHeroImageUrl.value;
-        form.hero_image = null;
-    }
-};
-
-const deleteHeroImage = () => {
-    if (confirm('Are you sure you want to delete the hero image?')) {
-        form.delete_hero_image = true;
-        heroImagePreview.value = null;
-        form.hero_image = null;
-        // Clear the file input
-        const input = document.getElementById('hero_image');
-        if (input) {
-            input.value = '';
-        }
-    }
-};
-
-const handleNewGalleryImagesChange = (event) => {
-    const files = Array.from(event.target.files);
-    files.forEach((file) => {
-        if (file) {
-            newGalleryPreviews.value.push({
-                file: file,
-                preview: URL.createObjectURL(file),
-            });
-            form.gallery_images.push(file);
-        }
-    });
-    event.target.value = '';
-};
-
-const removeNewGalleryImage = (index) => {
-    URL.revokeObjectURL(newGalleryPreviews.value[index].preview);
-    newGalleryPreviews.value.splice(index, 1);
-    form.gallery_images.splice(index, 1);
-};
-
-const removeExistingGalleryImage = (mediaId, index) => {
-    if (confirm('Are you sure you want to delete this image?')) {
-        form.delete_gallery_images.push(mediaId);
-        existingGalleryImages.value.splice(index, 1);
-    }
-};
-
-const triggerFileInput = (inputId) => {
-    const input = document.getElementById(inputId);
-    if (input) {
-        input.click();
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64String = e.target.result;
+            form.image_base64 = base64String;
+            imagePreview.value = base64String;
+        };
+        reader.readAsDataURL(file);
     }
 };
 
@@ -123,65 +70,7 @@ const removeHighlight = (index) => {
 };
 
 const submit = () => {
-    // Create FormData manually to ensure files are sent correctly
-    const formData = new FormData();
-    
-    // Add all form fields except files
-    Object.keys(form.data()).forEach((key) => {
-        if (key === 'hero_image' || key === 'gallery_images' || key === '_method') {
-            return; // Handle separately
-        }
-        
-        const value = form[key];
-        if (Array.isArray(value)) {
-            value.forEach((item, index) => {
-                formData.append(`${key}[${index}]`, item);
-            });
-        } else if (value !== null && value !== undefined) {
-            formData.append(key, value);
-        }
-    });
-    
-    // Add _method for PUT
-    formData.append('_method', 'PUT');
-    
-    // Add hero image if new one is selected
-    if (form.hero_image) {
-        formData.append('hero_image', form.hero_image);
-    }
-    
-    // Add flag to delete hero image
-    if (form.delete_hero_image) {
-        formData.append('delete_hero_image', '1');
-    }
-    
-    // Add new gallery images as array
-    if (form.gallery_images && form.gallery_images.length > 0) {
-        form.gallery_images.forEach((file) => {
-            formData.append('gallery_images[]', file);
-        });
-    }
-    
-    // Add images to delete
-    if (form.delete_gallery_images && form.delete_gallery_images.length > 0) {
-        form.delete_gallery_images.forEach((mediaId) => {
-            formData.append('delete_gallery_images[]', mediaId);
-        });
-    }
-    
-    // Submit using router.post with FormData
-    router.post(route('admin.itineraries.update', props.itinerary.id), formData, {
-        forceFormData: true,
-        onSuccess: () => {
-            form.gallery_images = [];
-            newGalleryPreviews.value = [];
-            form.delete_gallery_images = [];
-            router.reload({ only: ['itinerary'] });
-        },
-        onError: (errors) => {
-            console.error('Form submission errors:', errors);
-        },
-    });
+    form.put(route('admin.itineraries.update', props.itinerary.id));
 };
 </script>
 
@@ -212,142 +101,22 @@ const submit = () => {
             <form @submit.prevent="submit" class="space-y-6">
                 <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
                     <div class="p-6 space-y-6">
-                        <!-- Hero Image Upload -->
+                        <!-- Image Upload -->
                         <div>
-                            <InputLabel for="hero_image" value="Hero Image (Main picture)" />
+                            <InputLabel for="image" value="Safari Image (The main picture)" />
                             <div class="mt-2">
-                                <label
-                                    for="hero_image"
-                                    @click="triggerFileInput('hero_image')"
-                                    class="flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm font-medium text-gray-700 transition-colors hover:border-safari-green hover:bg-gray-100"
-                                >
-                                    <svg class="mr-2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                    </svg>
-                                    <span v-if="!heroImagePreview">Choose Hero Image</span>
-                                    <span v-else>Change Hero Image</span>
-                                </label>
                                 <input
-                                    id="hero_image"
+                                    id="image"
                                     type="file"
                                     accept="image/*"
-                                    @change="handleHeroImageChange"
-                                    class="hidden"
+                                    @change="handleImageChange"
+                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-safari-green file:text-white hover:file:bg-safari-green/90"
                                 />
                                 <p class="mt-1 text-xs text-gray-500">Upload a new image or leave empty to keep the current one.</p>
-                                <InputError class="mt-2" :message="form.errors.hero_image" />
-                                <div v-if="heroImagePreview || originalHeroImageUrl" class="mt-4">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <p class="text-xs font-medium text-gray-700">Current Hero Image:</p>
-                                        <button
-                                            v-if="originalHeroImageUrl && !form.delete_hero_image"
-                                            type="button"
-                                            @click="deleteHeroImage"
-                                            class="text-xs text-red-600 hover:text-red-800 font-medium"
-                                        >
-                                            Delete Image
-                                        </button>
-                                    </div>
-                                    <div v-if="heroImagePreview" class="relative group">
-                                        <img :src="heroImagePreview" alt="Preview" class="h-48 w-full rounded-lg object-cover border border-gray-200" />
-                                        <div v-if="form.delete_hero_image" class="absolute inset-0 bg-red-500/20 border-2 border-red-500 rounded-lg flex items-center justify-center">
-                                            <span class="text-red-600 font-semibold">Will be deleted</span>
-                                        </div>
-                                    </div>
-                                    <div v-else-if="originalHeroImageUrl && !form.delete_hero_image" class="relative group">
-                                        <img :src="originalHeroImageUrl" alt="Current Hero Image" class="h-48 w-full rounded-lg object-cover border border-gray-200" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Existing Gallery Images -->
-                        <div v-if="existingGalleryImages.length > 0 || form.delete_gallery_images.length > 0">
-                            <InputLabel value="Existing Gallery Images" />
-                            <div class="mt-2">
-                                <p class="text-xs text-gray-500 mb-3">Current gallery images. Click the X to remove them.</p>
-                                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                    <div
-                                        v-for="(image, index) in existingGalleryImages"
-                                        :key="image.id"
-                                        class="relative group"
-                                    >
-                                        <img
-                                            :src="image.url"
-                                            :alt="image.name || 'Gallery image'"
-                                            class="h-32 w-full rounded-lg object-cover border border-gray-200"
-                                            :class="{'opacity-50': form.delete_gallery_images.includes(image.id)}"
-                                        />
-                                        <div v-if="form.delete_gallery_images.includes(image.id)" class="absolute inset-0 bg-red-500/20 border-2 border-red-500 rounded-lg flex items-center justify-center">
-                                            <span class="text-red-600 font-semibold text-xs">Will be deleted</span>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            @click="removeExistingGalleryImage(image.id, index)"
-                                            class="absolute top-2 right-2 rounded-full bg-red-500 p-1.5 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
-                                            aria-label="Remove image"
-                                        >
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- New Gallery Images Upload -->
-                        <div>
-                            <InputLabel for="new_gallery_images" value="Add New Gallery Images" />
-                            <div class="mt-2">
-                                <label
-                                    for="new_gallery_images"
-                                    @click="triggerFileInput('new_gallery_images')"
-                                    class="flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm font-medium text-gray-700 transition-colors hover:border-safari-green hover:bg-gray-100"
-                                >
-                                    <svg class="mr-2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                    </svg>
-                                    <span v-if="newGalleryPreviews.length === 0">Choose Gallery Images (Multiple)</span>
-                                    <span v-else>Add More Gallery Images</span>
-                                </label>
-                                <input
-                                    id="new_gallery_images"
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    @change="handleNewGalleryImagesChange"
-                                    class="hidden"
-                                />
-                                <p class="mt-1 text-xs text-gray-500">Select additional images for the safari gallery.</p>
-                                <InputError class="mt-2" :message="form.errors.gallery_images" />
-                                
-                                <!-- New Gallery Previews -->
-                                <div v-if="newGalleryPreviews.length > 0" class="mt-4">
-                                    <p class="text-xs font-medium text-gray-700 mb-2">New Gallery Images ({{ newGalleryPreviews.length }}):</p>
-                                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                        <div
-                                            v-for="(preview, index) in newGalleryPreviews"
-                                            :key="index"
-                                            class="relative group"
-                                        >
-                                            <img
-                                                :src="preview.preview"
-                                                :alt="`New Gallery Image ${index + 1}`"
-                                                class="h-32 w-full rounded-lg object-cover border border-gray-200"
-                                            />
-                                            <button
-                                                type="button"
-                                                @click="removeNewGalleryImage(index)"
-                                                class="absolute top-2 right-2 rounded-full bg-red-500 p-1.5 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                                                aria-label="Remove image"
-                                            >
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
+                                <InputError class="mt-2" :message="form.errors.image_base64" />
+                                <div v-if="imagePreview" class="mt-4">
+                                    <p class="text-xs font-medium text-gray-700 mb-2">Preview:</p>
+                                    <img :src="imagePreview" alt="Preview" class="h-48 w-full rounded-lg object-cover border border-gray-200" />
                                 </div>
                             </div>
                         </div>

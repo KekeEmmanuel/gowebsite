@@ -34,8 +34,4 @@ Route::middleware(['throttle:60,1'])->group(function (): void {
     Route::post('/contact', [ContactController::class, 'store'])
         ->middleware('throttle:5,10')
         ->name('api.contact.store');
-
-    Route::post('/bookings', [\App\Http\Controllers\Api\BookingController::class, 'store'])
-        ->middleware('throttle:5,10')
-        ->name('api.bookings.store');
 });

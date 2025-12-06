@@ -39,22 +39,6 @@ const error = ref<string | null>(null);
 const selectedImageIndex = ref(0);
 const showImageModal = ref(false);
 
-// Booking form state
-const showBookingForm = ref(false);
-const isSubmittingBooking = ref(false);
-const bookingSuccess = ref(false);
-const bookingError = ref<string | null>(null);
-const bookingForm = ref({
-  first_name: '',
-  last_name: '',
-  email: '',
-  phone: '',
-  country: '',
-  number_of_travellers: 1,
-  preferred_travel_date: '',
-  special_requests: '',
-});
-
 onMounted(async () => {
   const slug = route.params.slug as string;
   
@@ -78,58 +62,6 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
-
-// Booking form handlers
-const submitBooking = async () => {
-  if (!itinerary.value) return;
-  
-  bookingError.value = null;
-  isSubmittingBooking.value = true;
-  
-  try {
-    const response = await fetch('/api/bookings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({
-        itinerary_id: itinerary.value.id,
-        ...bookingForm.value,
-      }),
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to submit booking');
-    }
-    
-    bookingSuccess.value = true;
-    // Reset form
-    bookingForm.value = {
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone: '',
-      country: '',
-      number_of_travellers: 1,
-      preferred_travel_date: '',
-      special_requests: '',
-    };
-    
-    // Hide success message after 5 seconds
-    setTimeout(() => {
-      bookingSuccess.value = false;
-      showBookingForm.value = false;
-    }, 5000);
-  } catch (err: any) {
-    console.error('Booking error:', err);
-    bookingError.value = err.message || 'An error occurred. Please try again.';
-  } finally {
-    isSubmittingBooking.value = false;
-  }
-};
 </script>
 
 <template>
@@ -406,143 +338,25 @@ const submitBooking = async () => {
                 </div>
               </div>
 
-              <!-- Booking Form -->
+              <!-- CTA Buttons -->
               <div class="space-y-4">
-                <button
-                  v-if="!showBookingForm"
-                  @click="showBookingForm = true"
+                <a
+                  href="#contact"
                   class="block w-full rounded-full bg-safari-gold px-6 py-4 text-center text-sm font-semibold text-charcoal transition hover:bg-safari-gold/90 hover:shadow-lg"
                 >
-                  Book This Safari
-                </button>
-                
-                <!-- Booking Form -->
-                <div v-if="showBookingForm" class="space-y-4">
-                  <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-heading text-charcoal">Book This Safari</h3>
-                    <button
-                      @click="showBookingForm = false"
-                      class="text-charcoal/60 hover:text-charcoal"
-                      aria-label="Close booking form"
-                    >
-                      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                      </svg>
-                    </button>
-                  </div>
-                  
-                  <!-- Success Message -->
-                  <div v-if="bookingSuccess" class="rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-800">
-                    <p class="font-semibold mb-1">Booking Request Submitted!</p>
-                    <p>We'll contact you within 24 hours to confirm your booking.</p>
-                  </div>
-                  
-                  <!-- Error Message -->
-                  <div v-if="bookingError" class="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-800">
-                    {{ bookingError }}
-                  </div>
-                  
-                  <form @submit.prevent="submitBooking" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                      <div>
-                        <label class="block text-xs font-semibold uppercase tracking-[0.2em] text-charcoal/70 mb-1.5">First Name *</label>
-                        <input
-                          v-model="bookingForm.first_name"
-                          type="text"
-                          required
-                          class="w-full rounded-lg border border-safari-sand/60 bg-white px-4 py-2.5 text-sm text-charcoal focus:border-safari-gold focus:outline-none focus:ring-2 focus:ring-safari-gold/20"
-                        />
-                      </div>
-                      <div>
-                        <label class="block text-xs font-semibold uppercase tracking-[0.2em] text-charcoal/70 mb-1.5">Last Name *</label>
-                        <input
-                          v-model="bookingForm.last_name"
-                          type="text"
-                          required
-                          class="w-full rounded-lg border border-safari-sand/60 bg-white px-4 py-2.5 text-sm text-charcoal focus:border-safari-gold focus:outline-none focus:ring-2 focus:ring-safari-gold/20"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label class="block text-xs font-semibold uppercase tracking-[0.2em] text-charcoal/70 mb-1.5">Email *</label>
-                      <input
-                        v-model="bookingForm.email"
-                        type="email"
-                        required
-                        class="w-full rounded-lg border border-safari-sand/60 bg-white px-4 py-2.5 text-sm text-charcoal focus:border-safari-gold focus:outline-none focus:ring-2 focus:ring-safari-gold/20"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label class="block text-xs font-semibold uppercase tracking-[0.2em] text-charcoal/70 mb-1.5">Phone *</label>
-                      <input
-                        v-model="bookingForm.phone"
-                        type="tel"
-                        required
-                        class="w-full rounded-lg border border-safari-sand/60 bg-white px-4 py-2.5 text-sm text-charcoal focus:border-safari-gold focus:outline-none focus:ring-2 focus:ring-safari-gold/20"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label class="block text-xs font-semibold uppercase tracking-[0.2em] text-charcoal/70 mb-1.5">Country</label>
-                      <input
-                        v-model="bookingForm.country"
-                        type="text"
-                        class="w-full rounded-lg border border-safari-sand/60 bg-white px-4 py-2.5 text-sm text-charcoal focus:border-safari-gold focus:outline-none focus:ring-2 focus:ring-safari-gold/20"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label class="block text-xs font-semibold uppercase tracking-[0.2em] text-charcoal/70 mb-1.5">Number of Travellers *</label>
-                      <input
-                        v-model.number="bookingForm.number_of_travellers"
-                        type="number"
-                        min="1"
-                        max="50"
-                        required
-                        class="w-full rounded-lg border border-safari-sand/60 bg-white px-4 py-2.5 text-sm text-charcoal focus:border-safari-gold focus:outline-none focus:ring-2 focus:ring-safari-gold/20"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label class="block text-xs font-semibold uppercase tracking-[0.2em] text-charcoal/70 mb-1.5">Preferred Travel Date</label>
-                      <input
-                        v-model="bookingForm.preferred_travel_date"
-                        type="date"
-                        :min="new Date().toISOString().split('T')[0]"
-                        class="w-full rounded-lg border border-safari-sand/60 bg-white px-4 py-2.5 text-sm text-charcoal focus:border-safari-gold focus:outline-none focus:ring-2 focus:ring-safari-gold/20"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label class="block text-xs font-semibold uppercase tracking-[0.2em] text-charcoal/70 mb-1.5">Special Requests</label>
-                      <textarea
-                        v-model="bookingForm.special_requests"
-                        rows="3"
-                        class="w-full rounded-lg border border-safari-sand/60 bg-white px-4 py-2.5 text-sm text-charcoal focus:border-safari-gold focus:outline-none focus:ring-2 focus:ring-safari-gold/20"
-                        placeholder="Any special requirements or questions..."
-                      ></textarea>
-                    </div>
-                    
-                    <button
-                      type="submit"
-                      :disabled="isSubmittingBooking"
-                      class="w-full rounded-full bg-safari-gold px-6 py-4 text-center text-sm font-semibold text-charcoal transition hover:bg-safari-gold/90 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <span v-if="isSubmittingBooking">Submitting...</span>
-                      <span v-else>Submit Booking Request</span>
-                    </button>
-                  </form>
-                </div>
-                
+                  Request This Safari
+                </a>
                 <a
-                  v-if="!showBookingForm"
                   href="#contact"
                   class="block w-full rounded-full border-2 border-safari-green px-6 py-4 text-center text-sm font-semibold text-safari-green transition hover:bg-safari-green hover:text-white"
                 >
                   Tailor This Itinerary
                 </a>
+                <button
+                  class="w-full rounded-full border border-safari-sand px-6 py-4 text-center text-sm font-semibold text-charcoal transition hover:bg-safari-sand/40"
+                >
+                  Download PDF
+                </button>
               </div>
 
               <!-- Contact Info -->

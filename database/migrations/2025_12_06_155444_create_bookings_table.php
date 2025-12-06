@@ -13,17 +13,6 @@ return new class extends Migration
     {
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('itinerary_id')->constrained()->cascadeOnDelete();
-            $table->string('first_name');
-            $table->string('last_name');
-            $table->string('email');
-            $table->string('phone');
-            $table->string('country')->nullable();
-            $table->integer('number_of_travellers')->default(1);
-            $table->date('preferred_travel_date')->nullable();
-            $table->text('special_requests')->nullable();
-            $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed'])->default('pending');
-            $table->text('admin_notes')->nullable();
             $table->timestamps();
         });
     }

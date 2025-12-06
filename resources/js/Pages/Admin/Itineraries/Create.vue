@@ -5,7 +5,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Textarea from '@/Components/Textarea.vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -23,8 +23,7 @@ const form = useForm({
     title: '',
     summary: '',
     badge: '',
-    hero_image: null,
-    gallery_images: [],
+    image_base64: null,
     slug: '',
     service_type_id: null,
     destination_id: null,
@@ -40,115 +39,19 @@ const form = useForm({
     published_at: null,
 });
 
-const heroImagePreview = ref(null);
-const galleryPreviews = ref([]);
+const imagePreview = ref(null);
 
-const handleHeroImageChange = (event) => {
+const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-        heroImagePreview.value = URL.createObjectURL(file);
-        form.hero_image = file;
-    } else {
-        heroImagePreview.value = null;
-        form.hero_image = null;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64String = e.target.result;
+            form.image_base64 = base64String;
+            imagePreview.value = base64String;
+        };
+        reader.readAsDataURL(file);
     }
-};
-
-const handleGalleryImagesChange = (event) => {
-    const files = Array.from(event.target.files);
-    files.forEach((file) => {
-        if (file) {
-            galleryPreviews.value.push({
-                file: file,
-                preview: URL.createObjectURL(file),
-            });
-            form.gallery_images.push(file);
-        }
-    });
-    // Reset the input so the same file can be selected again
-    event.target.value = '';
-};
-
-const removeGalleryImage = (index) => {
-    URL.revokeObjectURL(galleryPreviews.value[index].preview); // Clean up URL
-    galleryPreviews.value.splice(index, 1);
-    form.gallery_images.splice(index, 1);
-};
-
-const triggerFileInput = (inputId) => {
-    const input = document.getElementById(inputId);
-    if (input) {
-        // Small delay to ensure the input is ready
-        setTimeout(() => {
-            input.click();
-        }, 10);
-    }
-};
-
-const submit = () => {
-    // Validate required fields
-    if (!form.title || !form.slug || !form.service_type_id || !form.duration_days) {
-        alert('Please fill in all required fields (Title, Slug, Service Type, Duration)');
-        return;
-    }
-    
-    // Create FormData manually to ensure files are sent correctly
-    const formData = new FormData();
-    
-    // Add all form fields except files
-    Object.keys(form.data()).forEach((key) => {
-        if (key === 'hero_image' || key === 'gallery_images') {
-            return; // Handle files separately
-        }
-        
-        const value = form[key];
-        if (Array.isArray(value)) {
-            value.forEach((item, index) => {
-                formData.append(`${key}[${index}]`, item);
-            });
-        } else if (value !== null && value !== undefined) {
-            formData.append(key, value);
-        }
-    });
-    
-    // Add hero image
-    if (form.hero_image) {
-        formData.append('hero_image', form.hero_image);
-        console.log('Adding hero image:', form.hero_image.name, form.hero_image.size);
-    }
-    
-    // Add gallery images as array
-    if (form.gallery_images && form.gallery_images.length > 0) {
-        form.gallery_images.forEach((file, index) => {
-            formData.append('gallery_images[]', file);
-            console.log(`Adding gallery image ${index + 1}:`, file.name, file.size);
-        });
-    }
-    
-    console.log('Submitting form with:', {
-        title: form.title,
-        hero_image: form.hero_image ? form.hero_image.name : 'none',
-        gallery_count: form.gallery_images.length
-    });
-    
-    // Submit using router.post with FormData
-    router.post(route('admin.itineraries.store'), formData, {
-        forceFormData: true,
-        onSuccess: (page) => {
-            console.log('Success!', page);
-            form.reset();
-            heroImagePreview.value = null;
-            galleryPreviews.value = [];
-            // Redirect will happen automatically
-        },
-        onError: (errors) => {
-            console.error('Form submission errors:', errors);
-            alert('Error saving safari: ' + JSON.stringify(errors));
-        },
-        onFinish: () => {
-            console.log('Form submission finished');
-        },
-    });
 };
 
 const addHighlight = () => {
@@ -168,6 +71,10 @@ const generateSlug = () => {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
+};
+
+const submit = () => {
+    form.post(route('admin.itineraries.store'));
 };
 </script>
 
@@ -198,89 +105,22 @@ const generateSlug = () => {
             <form @submit.prevent="submit" class="space-y-6">
                 <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
                     <div class="p-6 space-y-6">
-                        <!-- Hero Image Upload -->
+                        <!-- Image Upload -->
                         <div>
-                            <InputLabel for="hero_image" value="Hero Image (Main picture) *" />
+                            <InputLabel for="image" value="Safari Image (The main picture) *" />
                             <div class="mt-2">
-                                <label
-                                    for="hero_image"
-                                    @click="triggerFileInput('hero_image')"
-                                    class="flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm font-medium text-gray-700 transition-colors hover:border-safari-green hover:bg-gray-100"
-                                >
-                                    <svg class="mr-2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                    </svg>
-                                    <span v-if="!heroImagePreview">Choose Hero Image</span>
-                                    <span v-else>Change Hero Image</span>
-                                </label>
                                 <input
-                                    id="hero_image"
+                                    id="image"
                                     type="file"
                                     accept="image/*"
-                                    @change="handleHeroImageChange"
-                                    class="hidden"
+                                    @change="handleImageChange"
+                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-safari-green file:text-white hover:file:bg-safari-green/90"
                                 />
-                                <p class="mt-1 text-xs text-gray-500">Upload the main image that will appear on the safari card.</p>
-                                <InputError class="mt-2" :message="form.errors.hero_image" />
-                                <div v-if="heroImagePreview" class="mt-4">
+                                <p class="mt-1 text-xs text-gray-500">Upload a high-quality image that represents this safari package.</p>
+                                <InputError class="mt-2" :message="form.errors.image_base64" />
+                                <div v-if="imagePreview" class="mt-4">
                                     <p class="text-xs font-medium text-gray-700 mb-2">Preview:</p>
-                                    <img :src="heroImagePreview" alt="Preview" class="h-48 w-full rounded-lg object-cover border border-gray-200" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Gallery Images Upload -->
-                        <div>
-                            <InputLabel for="gallery_images" value="Gallery Images (Additional photos)" />
-                            <div class="mt-2">
-                                <label
-                                    for="gallery_images"
-                                    @click="triggerFileInput('gallery_images')"
-                                    class="flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm font-medium text-gray-700 transition-colors hover:border-safari-green hover:bg-gray-100"
-                                >
-                                    <svg class="mr-2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                    </svg>
-                                    <span v-if="galleryPreviews.length === 0">Choose Gallery Images (Multiple)</span>
-                                    <span v-else>Add More Gallery Images</span>
-                                </label>
-                                <input
-                                    id="gallery_images"
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    @change="handleGalleryImagesChange"
-                                    class="hidden"
-                                />
-                                <p class="mt-1 text-xs text-gray-500">Upload multiple images to create a gallery. These will appear in the safari detail page and can be slided through on the safari cards.</p>
-                                <InputError class="mt-2" :message="form.errors.gallery_images" />
-                                
-                                <!-- Gallery Previews -->
-                                <div v-if="galleryPreviews.length > 0" class="mt-4">
-                                    <p class="text-xs font-medium text-gray-700 mb-2">Gallery Images ({{ galleryPreviews.length }}):</p>
-                                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                        <div
-                                            v-for="(preview, index) in galleryPreviews"
-                                            :key="index"
-                                            class="relative group"
-                                        >
-                                            <img
-                                                :src="preview.preview"
-                                                :alt="`Gallery image ${index + 1}`"
-                                                class="h-32 w-full rounded-lg object-cover border border-gray-200"
-                                            />
-                                            <button
-                                                type="button"
-                                                @click="removeGalleryImage(index)"
-                                                class="absolute top-2 right-2 rounded-full bg-red-500 p-1.5 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                                                aria-label="Remove image"
-                                            >
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <img :src="imagePreview" alt="Preview" class="h-48 w-full rounded-lg object-cover border border-gray-200" />
                                 </div>
                             </div>
                         </div>

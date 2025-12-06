@@ -40,7 +40,6 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->group(function (): voi
     Route::resource('lodges', LodgeController::class)->names('admin.lodges');
     Route::resource('contact-channels', ContactChannelController::class)->names('admin.contact-channels');
     Route::resource('contact-quick-facts', ContactQuickFactController::class)->names('admin.contact-quick-facts');
-    Route::resource('bookings', \App\Http\Controllers\Admin\BookingController::class)->names('admin.bookings')->except(['create', 'store', 'show', 'edit']);
 });
 
 require __DIR__.'/auth.php';
