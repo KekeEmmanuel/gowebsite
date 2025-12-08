@@ -6,7 +6,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Textarea from '@/Components/Textarea.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 
 const props = defineProps({
     lodge: {
@@ -37,22 +37,10 @@ const form = useForm({
     preserveScroll: true,
 });
 
-// Track if form has been submitted to only show errors after submission
-const hasSubmitted = ref(false);
-
-// Clear any existing errors on mount to prevent showing validation errors on initial load
-onMounted(() => {
-    form.clearErrors();
-});
-
 const submit = () => {
-    hasSubmitted.value = true;
     form.put(route('admin.lodges.update', props.lodge.id), {
         forceFormData: true,
         preserveScroll: true,
-        onSuccess: () => {
-            hasSubmitted.value = false;
-        },
     });
 };
 
@@ -132,7 +120,7 @@ const removeAmenity = (index) => {
         </template>
 
         <div class="max-w-4xl">
-            <form @submit.prevent="submit" class="space-y-6" enctype="multipart/form-data" novalidate>
+            <form @submit.prevent="submit" class="space-y-6" enctype="multipart/form-data">
                 <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
                     <div class="p-6 space-y-6">
                         <!-- Hero Image Upload -->
@@ -164,7 +152,7 @@ const removeAmenity = (index) => {
                                 type="text"
                                 class="mt-1 block w-full"
                             />
-                            <InputError v-if="hasSubmitted" class="mt-2" :message="form.errors.name" />
+                            <InputError class="mt-2" :message="form.errors.name" />
                         </div>
 
                         <!-- Slug -->
@@ -176,7 +164,7 @@ const removeAmenity = (index) => {
                                 type="text"
                                 class="mt-1 block w-full"
                             />
-                            <InputError v-if="hasSubmitted" class="mt-2" :message="form.errors.slug" />
+                            <InputError class="mt-2" :message="form.errors.slug" />
                         </div>
 
                         <!-- Location & Type -->
@@ -189,7 +177,7 @@ const removeAmenity = (index) => {
                                     type="text"
                                     class="mt-1 block w-full"
                                 />
-                                <InputError v-if="hasSubmitted" class="mt-2" :message="form.errors.location" />
+                                <InputError class="mt-2" :message="form.errors.location" />
                             </div>
                             <div>
                                 <InputLabel for="type" value="Type *" />
@@ -201,7 +189,7 @@ const removeAmenity = (index) => {
                                     <option value="lodge">Lodge</option>
                                     <option value="camp">Camp</option>
                                 </select>
-                                <InputError v-if="hasSubmitted" class="mt-2" :message="form.errors.type" />
+                                <InputError class="mt-2" :message="form.errors.type" />
                             </div>
                         </div>
 
@@ -231,7 +219,7 @@ const removeAmenity = (index) => {
 
                         <!-- Description -->
                         <div>
-                            <InputLabel for="description" value="Full Description" />
+                            <InputLabel for="description" value="Full Description *" />
                             <Textarea
                                 id="description"
                                 v-model="form.description"

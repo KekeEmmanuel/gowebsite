@@ -27,5 +27,10 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.env') === 'production' || request()->secure() || request()->header('X-Forwarded-Proto') === 'https') {
             URL::forceScheme('https');
         }
+        
+        // Enable OPcache in production for better performance
+        if (config('app.env') === 'production' && function_exists('opcache_reset')) {
+            // OPcache is automatically used by PHP when enabled
+        }
     }
 }

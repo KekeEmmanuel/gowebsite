@@ -20,4 +20,16 @@ export default defineConfig({
             },
         }),
     ],
+    build: {
+        // Optimize build for production
+        minify: 'esbuild',
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ['vue', '@inertiajs/vue3'],
+                },
+            },
+        },
+        chunkSizeWarningLimit: 1000,
+    },
 });

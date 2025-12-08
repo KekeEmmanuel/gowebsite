@@ -18,6 +18,13 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
+        
+        // Enable response caching in production
+        if (config('app.env') === 'production' && config('responsecache.enabled')) {
+            $middleware->web(prepend: [
+                \Spatie\ResponseCache\Middlewares\CacheResponse::class,
+            ]);
+        }
 
         //
     })
