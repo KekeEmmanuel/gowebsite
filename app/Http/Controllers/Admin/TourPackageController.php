@@ -50,7 +50,7 @@ class TourPackageController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:tour_packages,slug',
+            'slug' => 'nullable|string|max:255',
             'short_description' => 'nullable|string|max:500',
             'description' => 'required|string',
             'price_from' => 'nullable|numeric|min:0',
@@ -66,21 +66,36 @@ class TourPackageController extends Controller
 
         // Generate slug if not provided
         if (empty($validated['slug'])) {
-            $validated['slug'] = Str::slug($validated['title']);
+            $baseSlug = Str::slug($validated['title']);
+        } else {
+            $baseSlug = Str::slug($validated['slug']);
         }
+        
+        // Ensure slug is unique
+        $slug = $baseSlug;
+        $counter = 1;
+        while (TourPackage::where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+        $validated['slug'] = $slug;
 
         // Remove file fields from validated data before creating model
         unset($validated['hero_image'], $validated['gallery_images']);
 
-        $package = TourPackage::create($validated);
+        try {
+            $package = TourPackage::create($validated);
+        } catch (\Exception $e) {
+            \Log::error('Failed to create tour package: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'data' => $validated
+            ]);
+            return redirect()->back()
+                ->withErrors(['error' => 'Failed to create tour package: ' . $e->getMessage()])
+                ->withInput();
+        }
 
         // Handle hero image
-        \Log::info('Checking for hero_image file', [
-            'hasFile' => $request->hasFile('hero_image'),
-            'has' => $request->has('hero_image'),
-            'all' => array_keys($request->all()),
-        ]);
-        
         if ($request->hasFile('hero_image')) {
             try {
                 $media = $package->addMediaFromRequest('hero_image')
@@ -89,17 +104,14 @@ class TourPackageController extends Controller
                 \Log::info('Hero image uploaded successfully', ['media_id' => $media->id]);
             } catch (\Exception $e) {
                 \Log::error('Failed to upload hero image: ' . $e->getMessage(), [
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
+                    'package_id' => $package->id
                 ]);
+                // Don't fail the entire request if image upload fails
             }
         }
 
         // Handle gallery images
-        \Log::info('Checking for gallery_images files', [
-            'hasFile' => $request->hasFile('gallery_images'),
-            'has' => $request->has('gallery_images'),
-        ]);
-        
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $index => $image) {
                 try {
@@ -110,8 +122,10 @@ class TourPackageController extends Controller
                 } catch (\Exception $e) {
                     \Log::error('Failed to upload gallery image: ' . $e->getMessage(), [
                         'index' => $index,
-                        'trace' => $e->getTraceAsString()
+                        'trace' => $e->getTraceAsString(),
+                        'package_id' => $package->id
                     ]);
+                    // Continue with other images even if one fails
                 }
             }
         }
