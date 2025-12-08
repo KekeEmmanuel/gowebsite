@@ -1089,8 +1089,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
             <article
               v-for="(safari, index) in safariPackages"
               :key="safari.id || safari.title || index"
-              @click="() => safari.slug && $router.push(`/itineraries/${safari.slug}`)"
-              class="group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/8 to-white/5 backdrop-blur-md shadow-xl transition-all duration-500 hover:-translate-y-3 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] hover:bg-gradient-to-br hover:from-white/15 hover:via-white/12 hover:to-white/8 hover:border-white/40 hover:border-safari-gold/30 cursor-pointer"
+              class="group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/8 to-white/5 backdrop-blur-md shadow-xl transition-all duration-500 hover:-translate-y-3 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] hover:bg-gradient-to-br hover:from-white/15 hover:via-white/12 hover:to-white/8 hover:border-white/40 hover:border-safari-gold/30"
             >
               <!-- Image Container -->
               <div class="relative h-64 overflow-hidden">
@@ -1157,17 +1156,9 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                       ${{ typeof safari.price_from === 'number' ? safari.price_from.toLocaleString() : safari.price_from }}
                     </p>
                   </div>
-                  <div class="flex items-center gap-3" @click.stop>
-                    <router-link
-                      :to="`/itineraries/${safari.slug || ''}`"
-                      class="group flex-1 rounded-full bg-safari-gold px-6 py-3.5 text-center text-sm font-semibold text-charcoal transition-all duration-300 hover:bg-safari-gold-light hover:shadow-glow-gold hover:scale-105"
-                    >
-                      View Details
-                      <span class="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
-                    </router-link>
+                  <div class="flex items-center justify-center">
                     <a
                       href="#contact"
-                      @click.stop
                       class="group flex items-center justify-center rounded-full border-2 border-white/40 bg-white/5 backdrop-blur-sm px-6 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:border-white hover:bg-white/20 hover:scale-105"
                     >
                       Tailor
