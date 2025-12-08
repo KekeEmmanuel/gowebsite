@@ -19,6 +19,12 @@ class TourPackageController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($package) {
+                    $heroImage = $package->getFirstMediaUrl('hero');
+                    // Convert absolute URLs to relative paths
+                    if ($heroImage && strpos($heroImage, 'http') === 0) {
+                        $parsed = parse_url($heroImage);
+                        $heroImage = $parsed['path'] ?? $heroImage;
+                    }
                     return [
                         'id' => $package->id,
                         'title' => $package->title,
@@ -29,7 +35,7 @@ class TourPackageController extends Controller
                         'is_featured' => $package->is_featured,
                         'display_order' => $package->display_order,
                         'published_at' => $package->published_at?->toISOString(),
-                        'hero_image' => $package->getFirstMediaUrl('hero'),
+                        'hero_image' => $heroImage ?: null,
                     ];
                 }),
         ]);
@@ -63,19 +69,50 @@ class TourPackageController extends Controller
             $validated['slug'] = Str::slug($validated['title']);
         }
 
+        // Remove file fields from validated data before creating model
+        unset($validated['hero_image'], $validated['gallery_images']);
+
         $package = TourPackage::create($validated);
 
         // Handle hero image
+        \Log::info('Checking for hero_image file', [
+            'hasFile' => $request->hasFile('hero_image'),
+            'has' => $request->has('hero_image'),
+            'all' => array_keys($request->all()),
+        ]);
+        
         if ($request->hasFile('hero_image')) {
-            $package->addMediaFromRequest('hero_image')
-                ->toMediaCollection('hero');
+            try {
+                $media = $package->addMediaFromRequest('hero_image')
+                    ->preservingOriginal()
+                    ->toMediaCollection('hero');
+                \Log::info('Hero image uploaded successfully', ['media_id' => $media->id]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to upload hero image: ' . $e->getMessage(), [
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
         }
 
         // Handle gallery images
+        \Log::info('Checking for gallery_images files', [
+            'hasFile' => $request->hasFile('gallery_images'),
+            'has' => $request->has('gallery_images'),
+        ]);
+        
         if ($request->hasFile('gallery_images')) {
-            foreach ($request->file('gallery_images') as $image) {
-                $package->addMediaFromRequest('gallery_images')
-                    ->toMediaCollection('gallery');
+            foreach ($request->file('gallery_images') as $index => $image) {
+                try {
+                    $media = $package->addMedia($image->getRealPath())
+                        ->preservingOriginal()
+                        ->toMediaCollection('gallery');
+                    \Log::info('Gallery image uploaded successfully', ['index' => $index, 'media_id' => $media->id]);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to upload gallery image: ' . $e->getMessage(), [
+                        'index' => $index,
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
             }
         }
 
@@ -85,6 +122,26 @@ class TourPackageController extends Controller
 
     public function edit(TourPackage $tourPackage): Response
     {
+        // Convert absolute URLs to relative paths
+        $heroImage = $tourPackage->getFirstMediaUrl('hero');
+        if ($heroImage && strpos($heroImage, 'http') === 0) {
+            $parsed = parse_url($heroImage);
+            $heroImage = $parsed['path'] ?? $heroImage;
+        }
+        
+        $gallery = $tourPackage->getMedia('gallery')->map(function ($media) {
+            $url = $media->getUrl();
+            // Convert absolute URLs to relative paths
+            if ($url && strpos($url, 'http') === 0) {
+                $parsed = parse_url($url);
+                $url = $parsed['path'] ?? $url;
+            }
+            return [
+                'id' => $media->id,
+                'url' => $url,
+            ];
+        });
+        
         return Inertia::render('Admin/TourPackages/Edit', [
             'package' => [
                 'id' => $tourPackage->id,
@@ -98,11 +155,8 @@ class TourPackageController extends Controller
                 'display_order' => $tourPackage->display_order,
                 'is_featured' => $tourPackage->is_featured,
                 'published_at' => $tourPackage->published_at?->toISOString(),
-                'hero_image' => $tourPackage->getFirstMediaUrl('hero'),
-                'gallery' => $tourPackage->getMedia('gallery')->map(fn ($media) => [
-                    'id' => $media->id,
-                    'url' => $media->getUrl(),
-                ]),
+                'hero_image' => $heroImage ?: null,
+                'gallery' => $gallery,
             ],
         ]);
     }
@@ -125,20 +179,33 @@ class TourPackageController extends Controller
             'gallery_images.*' => 'image|max:10240',
         ]);
 
+        // Remove file fields from validated data before updating model
+        unset($validated['hero_image'], $validated['gallery_images']);
+        
         $tourPackage->update($validated);
 
         // Handle hero image
         if ($request->hasFile('hero_image')) {
-            $tourPackage->clearMediaCollection('hero');
-            $tourPackage->addMediaFromRequest('hero_image')
-                ->toMediaCollection('hero');
+            try {
+                $tourPackage->clearMediaCollection('hero');
+                $tourPackage->addMediaFromRequest('hero_image')
+                    ->preservingOriginal()
+                    ->toMediaCollection('hero');
+            } catch (\Exception $e) {
+                \Log::error('Failed to upload hero image: ' . $e->getMessage());
+            }
         }
 
         // Handle gallery images
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                $tourPackage->addMedia($image->getRealPath())
-                    ->toMediaCollection('gallery');
+                try {
+                    $tourPackage->addMedia($image->getRealPath())
+                        ->preservingOriginal()
+                        ->toMediaCollection('gallery');
+                } catch (\Exception $e) {
+                    \Log::error('Failed to upload gallery image: ' . $e->getMessage());
+                }
             }
         }
 

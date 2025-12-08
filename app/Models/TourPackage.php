@@ -77,14 +77,12 @@ class TourPackage extends Model implements HasMedia
             ->addMediaConversion('thumb')
             ->width(480)
             ->height(320)
-            ->fit('crop', 480, 320)
             ->performOnCollections('hero', 'gallery');
 
         $this
             ->addMediaConversion('cover')
             ->width(1280)
             ->height(720)
-            ->fit('crop', 1280, 720)
             ->performOnCollections('hero', 'gallery');
     }
 }

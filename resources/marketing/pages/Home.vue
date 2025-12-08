@@ -290,8 +290,12 @@ onMounted(async () => {
       signatureLodges.value = lodges.map((lodge: any) => ({
         name: lodge.name || '',
         location: lodge.location || '',
-        image: lodge.image || '/images/safari/lodge-1.jpg',
+        image: lodge.hero_image?.url || lodge.image || '/images/safari/beach-1.jpg',
         mood: lodge.mood || '',
+        type: lodge.type || 'lodge',
+        short_description: lodge.short_description || '',
+        amenities: lodge.amenities || [],
+        price_from: lodge.price_from || null,
       }));
     } else {
       console.warn('No lodges found in API response, using defaults');
@@ -1448,6 +1452,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                     :alt="lodge.name"
                     class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
+                    @error="(e) => { e.target.src = '/images/safari/beach-1.jpg'; }"
                   />
                   <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
                   <div class="absolute left-5 sm:left-6 top-5 sm:top-6 rounded-full bg-white/90 backdrop-blur-sm border border-white/30 px-4 sm:px-5 py-1.5 sm:py-2 text-xs font-bold uppercase tracking-[0.3em] text-charcoal shadow-md transition-all duration-300 group-hover:border-safari-gold/50 group-hover:shadow-lg">
@@ -1455,8 +1460,24 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                   </div>
                 </div>
                 <div class="relative flex h-full flex-col gap-4 sm:gap-5 p-6 sm:p-8">
-                  <h3 class="text-xl sm:text-2xl font-heading font-bold text-charcoal transition-transform duration-300 group-hover:scale-105">{{ lodge.name }}</h3>
-                  <p class="text-sm sm:text-base leading-relaxed text-charcoal/75" v-html="lodge.mood"></p>
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold capitalize"
+                      :class="lodge.type === 'lodge' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'">
+                      {{ lodge.type }}
+                    </span>
+                    <h3 class="text-xl sm:text-2xl font-heading font-bold text-charcoal transition-transform duration-300 group-hover:scale-105">{{ lodge.name }}</h3>
+                  </div>
+                  <p v-if="lodge.short_description" class="text-sm sm:text-base leading-relaxed text-charcoal/75">{{ lodge.short_description }}</p>
+                  <p v-else-if="lodge.mood" class="text-sm sm:text-base leading-relaxed text-charcoal/75" v-html="lodge.mood"></p>
+                  <div v-if="lodge.amenities && lodge.amenities.length > 0" class="flex flex-wrap gap-2">
+                    <span
+                      v-for="(amenity, index) in lodge.amenities.slice(0, 3)"
+                      :key="index"
+                      class="inline-flex rounded-full bg-safari-green/10 px-2 py-1 text-xs text-safari-green"
+                    >
+                      {{ amenity }}
+                    </span>
+                  </div>
                   <div class="mt-auto flex items-center justify-between pt-5 sm:pt-6 border-t border-safari-sand/40 text-sm font-bold uppercase tracking-[0.3em] text-safari-gold transition-all duration-300 group-hover:gap-4">
                     <span>Inquire</span>
                     <span aria-hidden="true" class="transition-transform duration-300 group-hover:translate-x-1">→</span>

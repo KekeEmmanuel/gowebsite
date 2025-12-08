@@ -32,6 +32,7 @@ Route::middleware(['throttle:60,1'])->group(function (): void {
     Route::get('/about-stats', [AboutStatController::class, 'index'])->name('api.about-stats.index');
     Route::get('/about-highlights', [AboutHighlightController::class, 'index'])->name('api.about-highlights.index');
     Route::get('/lodges', [LodgeController::class, 'index'])->name('api.lodges.index');
+    Route::get('/lodges/{slug}', [LodgeController::class, 'show'])->name('api.lodges.show');
 
     Route::get('/tour-packages', [TourPackageController::class, 'index'])->name('api.tour-packages.index');
     Route::get('/tour-packages/{slug}', [TourPackageController::class, 'show'])->name('api.tour-packages.show');

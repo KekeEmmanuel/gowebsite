@@ -43,7 +43,7 @@ class LodgeSeeder extends Seeder
                 'name' => 'Tarangire Tented Camp',
                 'location' => 'Tarangire National Park',
                 'mood' => 'Authentic',
-                'image_base64' => $this->getImageBase64($imagePath . '/wildlife-giraffe.jpg'),
+                'image_base64' => $this->getImageBase64($imagePath . '/beach-2.jpg'),
                 'display_order' => 3,
                 'is_active' => true,
             ],
