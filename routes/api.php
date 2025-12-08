@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AboutHighlightController;
 use App\Http\Controllers\Api\AboutStatController;
+use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\DestinationController;
 use App\Http\Controllers\Api\FeatureCardController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Api\LodgeController;
 use App\Http\Controllers\Api\PartnerController;
 use App\Http\Controllers\Api\ServiceTypeController;
 use App\Http\Controllers\Api\TestimonialController;
+use App\Http\Controllers\Api\TourPackageController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['throttle:60,1'])->group(function (): void {
@@ -31,7 +33,14 @@ Route::middleware(['throttle:60,1'])->group(function (): void {
     Route::get('/about-highlights', [AboutHighlightController::class, 'index'])->name('api.about-highlights.index');
     Route::get('/lodges', [LodgeController::class, 'index'])->name('api.lodges.index');
 
+    Route::get('/tour-packages', [TourPackageController::class, 'index'])->name('api.tour-packages.index');
+    Route::get('/tour-packages/{slug}', [TourPackageController::class, 'show'])->name('api.tour-packages.show');
+
     Route::post('/contact', [ContactController::class, 'store'])
         ->middleware('throttle:5,10')
         ->name('api.contact.store');
+
+    Route::post('/bookings', [BookingController::class, 'store'])
+        ->middleware('throttle:5,10')
+        ->name('api.bookings.store');
 });

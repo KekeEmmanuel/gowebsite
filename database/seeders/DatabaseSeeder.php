@@ -23,6 +23,8 @@ class DatabaseSeeder extends Seeder
             FeatureCardSeeder::class,
             AboutStatSeeder::class,
             AboutHighlightSeeder::class,
+            TourPackageSeeder::class,
+            BookingSeeder::class,
         ]);
     }
 }

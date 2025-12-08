@@ -23,6 +23,14 @@ Route::get('/itineraries/{slug}', function () {
     return view('marketing');
 })->where('slug', '[a-z0-9-]+');
 
+Route::get('/tour-packages', function () {
+    return view('marketing');
+});
+
+Route::get('/tour-packages/{slug}', function () {
+    return view('marketing');
+})->where('slug', '[a-z0-9-]+');
+
 Route::prefix('admin')->middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -40,6 +48,9 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->group(function (): voi
     Route::resource('lodges', LodgeController::class)->names('admin.lodges');
     Route::resource('contact-channels', ContactChannelController::class)->names('admin.contact-channels');
     Route::resource('contact-quick-facts', ContactQuickFactController::class)->names('admin.contact-quick-facts');
+    Route::resource('tour-packages', \App\Http\Controllers\Admin\TourPackageController::class)->names('admin.tour-packages');
+    Route::resource('bookings', \App\Http\Controllers\Admin\BookingController::class)->names('admin.bookings');
+    Route::post('bookings/{booking}/complete', [\App\Http\Controllers\Admin\BookingController::class, 'markCompleted'])->name('admin.bookings.complete');
 });
 
 require __DIR__.'/auth.php';

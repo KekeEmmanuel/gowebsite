@@ -302,6 +302,46 @@ onMounted(async () => {
     // Always use defaults on any error
     signatureLodges.value = [...DEFAULT_LODGES];
   }
+
+  // Fetch tour packages with timeout and fallback (show 6 featured packages on homepage)
+  isLoadingTourPackages.value = true;
+  try {
+    const response = await fetchWithTimeout('/api/tour-packages?per_page=6', {}, 8000);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    
+    // Handle paginated response
+    const packages = Array.isArray(data) ? data : (data.data || []);
+    
+    if (packages.length > 0) {
+      // Sort to show featured first, then by display_order
+      const sortedPackages = [...packages].sort((a: any, b: any) => {
+        if (a.is_featured && !b.is_featured) return -1;
+        if (!a.is_featured && b.is_featured) return 1;
+        return (a.display_order || 0) - (b.display_order || 0);
+      });
+      
+      tourPackages.value = sortedPackages.slice(0, 6).map((pkg: any) => ({
+        id: pkg.id,
+        slug: pkg.slug,
+        title: pkg.title || '',
+        short_description: pkg.short_description || null,
+        price_from: pkg.price_from || null,
+        duration_days: pkg.duration_days || null,
+        max_participants: pkg.max_participants || null,
+        is_featured: pkg.is_featured || false,
+        hero_image: pkg.hero_image || null,
+        gallery: pkg.gallery || [],
+        images: pkg.images || [],
+      }));
+    }
+  } catch (error) {
+    console.error('Error fetching tour packages (network/timeout/error):', error);
+  } finally {
+    isLoadingTourPackages.value = false;
+  }
 });
 
 const currentSlide = ref(0);
@@ -440,6 +480,23 @@ type Lodge = {
 };
 
 const signatureLodges = ref<Lodge[]>([]);
+
+type TourPackage = {
+  id: number;
+  slug: string;
+  title: string;
+  short_description: string | null;
+  price_from: number | string | null;
+  duration_days: number | null;
+  max_participants: number | null;
+  is_featured: boolean;
+  hero_image: { url: string; thumb: string; cover: string } | null;
+  gallery: Array<{ id: number; url: string; thumb: string; cover: string }>;
+  images: string[];
+};
+
+const tourPackages = ref<TourPackage[]>([]);
+const isLoadingTourPackages = ref(true);
 
 type AboutStat = {
   value: string;
@@ -660,6 +717,12 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
             >
               Destinations
             </a>
+            <router-link 
+              to="/tour-packages"
+              class="rounded-full border border-safari-gold/40 bg-black/60 backdrop-blur-md px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.25em] text-white shadow-medium transition-all duration-300 hover:bg-safari-gold hover:text-charcoal hover:border-safari-gold hover:shadow-glow-gold hover:scale-110" 
+            >
+              Packages
+            </router-link>
             <a 
               class="rounded-full border border-safari-gold/40 bg-black/60 backdrop-blur-md px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.25em] text-white shadow-medium transition-all duration-300 hover:bg-safari-gold hover:text-charcoal hover:border-safari-gold hover:shadow-glow-gold hover:scale-110" 
               href="#lodges"
@@ -802,22 +865,23 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
         ]"
       >
         <!-- Very faded background image -->
-        <div class="absolute inset-0 opacity-[0.15]">
+        <div class="absolute inset-0 opacity-[0.2] z-0">
           <img
-            src="/images/safari/wildlife-savannah.jpg"
+            src="/images/safari/wildlife-herd.jpg"
             alt=""
             class="h-full w-full object-cover object-center"
             loading="lazy"
+            @error="(e) => { (e.target as HTMLImageElement).src = '/images/safari/beach-1.jpg'; }"
           />
-          <div class="absolute inset-0 bg-gradient-to-b from-white/30 via-white/15 to-white/30"></div>
+          <div class="absolute inset-0 bg-gradient-to-b from-white/25 via-white/10 to-white/25"></div>
         </div>
         
         <!-- Enhanced background patterns -->
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(217,154,56,0.06),transparent_60%)]"></div>
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(31,59,43,0.03),transparent_60%)]"></div>
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 h-px w-3/4 bg-gradient-to-r from-transparent via-safari-gold/20 to-transparent"></div>
+        <div class="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,rgba(217,154,56,0.06),transparent_60%)]"></div>
+        <div class="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(31,59,43,0.03),transparent_60%)]"></div>
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 z-0 h-px w-3/4 bg-gradient-to-r from-transparent via-safari-gold/20 to-transparent"></div>
         
-        <div class="relative mx-auto max-w-6xl px-6">
+        <div class="relative z-10 mx-auto max-w-6xl px-6">
           <!-- Header with improved spacing and visual hierarchy -->
           <div class="text-center mb-16 sm:mb-20">
             <div class="inline-flex items-center gap-3 mb-6">
@@ -884,11 +948,24 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
         </div>
       </section>
 
-      <section id="about" class="relative overflow-hidden bg-gradient-to-b from-white via-safari-sand/10 to-white py-24 sm:py-32">
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(217,154,56,0.08),transparent_60%)]"></div>
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(31,59,43,0.05),transparent_60%)]"></div>
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 h-px w-3/4 bg-gradient-to-r from-transparent via-safari-gold/20 to-transparent"></div>
-        <div class="relative mx-auto max-w-7xl px-6">
+      <section id="about" class="relative overflow-hidden bg-gradient-to-b from-charcoal via-charcoal-dark to-charcoal text-white py-24 sm:py-32">
+        <!-- Dark background with subtle image -->
+        <div class="absolute inset-0 opacity-[0.12] z-0">
+          <img
+            src="/images/safari/wildlife-zebra.jpg"
+            alt=""
+            class="h-full w-full object-cover object-center"
+            loading="lazy"
+            @error="(e) => { (e.target as HTMLImageElement).src = '/images/safari/beach-1.jpg'; }"
+          />
+          <div class="absolute inset-0 bg-gradient-to-b from-charcoal/90 via-charcoal/85 to-charcoal/90"></div>
+        </div>
+        
+        <!-- Enhanced background patterns -->
+        <div class="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top_left,rgba(217,154,56,0.15),transparent_60%)]"></div>
+        <div class="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(31,59,43,0.12),transparent_60%)]"></div>
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 z-0 h-px w-3/4 bg-gradient-to-r from-transparent via-safari-gold/40 to-transparent"></div>
+        <div class="relative z-10 mx-auto max-w-7xl px-6">
           <div class="grid gap-12 lg:gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
             <div class="space-y-6">
               <div class="inline-flex items-center gap-3">
@@ -898,10 +975,10 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                 </p>
                 <div class="h-px w-12 bg-gradient-to-l from-transparent to-safari-gold/60"></div>
               </div>
-              <h2 class="text-4xl font-heading font-bold text-charcoal leading-tight sm:text-5xl lg:text-6xl text-balance">
+              <h2 class="text-4xl font-heading font-bold text-white leading-tight sm:text-5xl lg:text-6xl text-balance">
                 Journeys designed by locals who live, breathe, and protect Tanzania
               </h2>
-              <p class="text-lg sm:text-xl leading-relaxed text-charcoal/75 max-w-2xl">
+              <p class="text-lg sm:text-xl leading-relaxed text-white/85 max-w-2xl">
                 We move beyond brochure itineraries. Our Dar es Salaam and Arusha teams collaborate daily
                 with guides, lodge owners, and conservation partners to secure privileged access and real-time
                 intelligence. The result: safaris that feel effortless, immersive, and entirely your own.
@@ -918,32 +995,32 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                 </a>
                 <a
                   href="#safaris"
-                  class="group rounded-full border-2 border-safari-green bg-white/80 backdrop-blur-sm px-8 py-4 text-sm font-semibold text-safari-green transition-all duration-300 hover:bg-safari-green hover:text-white hover:shadow-lg hover:shadow-safari-green/20 hover:scale-105"
+                  class="group rounded-full border-2 border-safari-gold bg-white/10 backdrop-blur-sm px-8 py-4 text-sm font-semibold text-safari-gold transition-all duration-300 hover:bg-safari-gold hover:text-charcoal hover:shadow-lg hover:shadow-safari-gold/30 hover:scale-105"
                 >
                   View Sample Safaris
                   <span class="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
                 </a>
               </div>
             </div>
-            <div class="rounded-2xl sm:rounded-3xl border border-safari-sand/30 bg-gradient-to-br from-white/90 via-white/80 to-white/70 backdrop-blur-md p-8 sm:p-10 shadow-xl transition-all duration-300 hover:border-safari-gold/40 hover:shadow-2xl">
+            <div class="rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/8 to-white/5 backdrop-blur-md p-8 sm:p-10 shadow-xl transition-all duration-300 hover:border-safari-gold/50 hover:shadow-2xl hover:shadow-safari-gold/20">
               <ul class="grid gap-5 sm:gap-6 sm:grid-cols-3 lg:grid-cols-1">
                 <li
                   v-for="stat in aboutStats"
                   :key="stat.label"
-                  class="group relative rounded-xl sm:rounded-2xl bg-gradient-to-br from-safari-sand/30 via-safari-sand/20 to-safari-sand/10 px-6 sm:px-8 py-5 sm:py-6 text-center transition-all duration-300 hover:shadow-lg hover:scale-105 hover:from-safari-gold/10 hover:via-safari-sand/20 hover:to-safari-sand/10"
+                  class="group relative rounded-xl sm:rounded-2xl bg-gradient-to-br from-white/15 via-white/10 to-white/5 border border-white/20 px-6 sm:px-8 py-5 sm:py-6 text-center transition-all duration-300 hover:shadow-lg hover:scale-105 hover:from-safari-gold/20 hover:via-white/15 hover:to-white/10 hover:border-safari-gold/40"
                 >
-                  <p class="text-3xl sm:text-4xl font-heading font-bold text-safari-green transition-transform duration-300 group-hover:scale-110">{{ stat.value }}</p>
-                  <p class="mt-3 text-xs font-semibold uppercase tracking-[0.25em] text-charcoal/70" v-html="stat.label"></p>
+                  <p class="text-3xl sm:text-4xl font-heading font-bold text-safari-gold transition-transform duration-300 group-hover:scale-110">{{ stat.value }}</p>
+                  <p class="mt-3 text-xs font-semibold uppercase tracking-[0.25em] text-white/80" v-html="stat.label"></p>
                   <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-0 bg-gradient-to-r from-safari-gold to-transparent transition-all duration-300 group-hover:w-full rounded-full"></div>
                 </li>
               </ul>
-              <div class="mt-8 sm:mt-10 rounded-xl sm:rounded-2xl border border-safari-gold/30 bg-gradient-to-br from-safari-gold/8 via-safari-gold/5 to-transparent p-7 sm:p-8 transition-all duration-300 hover:border-safari-gold/50 hover:shadow-lg">
+              <div class="mt-8 sm:mt-10 rounded-xl sm:rounded-2xl border border-safari-gold/40 bg-gradient-to-br from-safari-gold/15 via-safari-gold/10 to-transparent p-7 sm:p-8 transition-all duration-300 hover:border-safari-gold/60 hover:shadow-lg hover:shadow-safari-gold/20">
                 <div class="flex items-center gap-3 mb-4">
-                  <div class="h-px flex-1 bg-gradient-to-r from-safari-gold/60 to-transparent"></div>
+                  <div class="h-px flex-1 bg-gradient-to-r from-safari-gold/80 to-transparent"></div>
                   <p class="text-sm font-bold uppercase tracking-[0.35em] text-safari-gold">Accreditations</p>
-                  <div class="h-px flex-1 bg-gradient-to-l from-safari-gold/60 to-transparent"></div>
+                  <div class="h-px flex-1 bg-gradient-to-l from-safari-gold/80 to-transparent"></div>
                 </div>
-                <p class="text-sm leading-relaxed text-charcoal/80">
+                <p class="text-sm leading-relaxed text-white/90">
                   Proud members of the Tanzania Association of Tour Operators (TATO), ATTA, and Leave No Trace. We
                   hand-select suppliers championing eco-conscious luxury.
                 </p>
@@ -954,14 +1031,14 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
             <article
               v-for="highlight in aboutHighlights"
               :key="highlight.title"
-              class="group relative rounded-2xl sm:rounded-3xl border border-safari-sand/30 bg-gradient-to-br from-white/90 via-white/80 to-white/70 backdrop-blur-md p-7 sm:p-8 transition-all duration-500 hover:-translate-y-2 hover:border-safari-gold/50 hover:shadow-2xl hover:shadow-safari-gold/10"
+              class="group relative rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-md p-7 sm:p-8 transition-all duration-500 hover:-translate-y-2 hover:border-safari-gold/50 hover:shadow-2xl hover:shadow-safari-gold/20"
             >
-              <div class="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-safari-gold/8 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
-              <div class="relative inline-flex rounded-full bg-gradient-to-r from-safari-gold/15 to-safari-gold/8 border border-safari-gold/30 px-5 py-2 text-xs font-bold uppercase tracking-[0.3em] text-safari-green shadow-sm transition-all duration-300 group-hover:border-safari-gold/50 group-hover:shadow-md">
+              <div class="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-safari-gold/15 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+              <div class="relative inline-flex rounded-full bg-gradient-to-r from-safari-gold/25 to-safari-gold/15 border border-safari-gold/40 px-5 py-2 text-xs font-bold uppercase tracking-[0.3em] text-white shadow-sm transition-all duration-300 group-hover:border-safari-gold/60 group-hover:shadow-md">
                 Core Pillar
               </div>
-              <h3 class="mt-6 text-xl sm:text-2xl font-heading font-bold text-charcoal transition-transform duration-300 group-hover:scale-105">{{ highlight.title }}</h3>
-              <p class="mt-4 text-base leading-relaxed text-charcoal/75">
+              <h3 class="mt-6 text-xl sm:text-2xl font-heading font-bold text-white transition-transform duration-300 group-hover:scale-105">{{ highlight.title }}</h3>
+              <p class="mt-4 text-base leading-relaxed text-white/80">
                 {{ highlight.copy }}
               </p>
               <div class="mt-6 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-safari-gold transition-all duration-300 group-hover:gap-3">
@@ -1129,6 +1206,111 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
               </span>
               <div class="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
             </a>
+          </div>
+        </div>
+      </section>
+
+      <section id="packages" class="relative overflow-hidden bg-gradient-to-b from-safari-green-dark via-charcoal to-charcoal-dark text-white py-24 sm:py-32">
+        <!-- Dark background with subtle image -->
+        <div class="absolute inset-0 opacity-[0.1] z-0">
+          <img
+            src="/images/safari/wildlife-giraffe.jpg"
+            alt=""
+            class="h-full w-full object-cover object-center"
+            loading="lazy"
+            @error="(e) => { (e.target as HTMLImageElement).src = '/images/safari/beach-1.jpg'; }"
+          />
+          <div class="absolute inset-0 bg-gradient-to-b from-charcoal/95 via-charcoal/90 to-charcoal/95"></div>
+        </div>
+        
+        <!-- Enhanced background patterns -->
+        <div class="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_70%_30%,rgba(217,154,56,0.12),transparent_60%)]"></div>
+        <div class="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_20%_80%,rgba(31,59,43,0.08),transparent_60%)]"></div>
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 z-0 h-px w-3/4 bg-gradient-to-r from-transparent via-safari-gold/40 to-transparent"></div>
+        <div class="relative z-10 mx-auto max-w-7xl px-6">
+          <div class="mb-16 sm:mb-20 text-center">
+            <div class="inline-flex items-center gap-3 mb-6">
+              <div class="h-px w-12 bg-gradient-to-r from-transparent to-safari-gold/60"></div>
+              <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
+                Tour Packages
+              </p>
+              <div class="h-px w-12 bg-gradient-to-l from-transparent to-safari-gold/60"></div>
+            </div>
+            <h2 class="text-4xl font-heading font-bold text-white leading-tight sm:text-5xl lg:text-6xl text-balance mb-6">
+              Customizable Tour Packages
+            </h2>
+            <p class="mx-auto max-w-3xl text-lg sm:text-xl leading-relaxed text-white/85">
+              Build your perfect Tanzanian adventure with our flexible tour packages. Choose locations, customize your itinerary, and create memories that last a lifetime.
+            </p>
+          </div>
+
+          <div v-if="tourPackages.length > 0" class="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-12">
+            <article
+              v-for="pkg in tourPackages"
+              :key="pkg.id"
+              @click="() => pkg.slug && router.push(`/tour-packages/${pkg.slug}`)"
+              class="group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-md shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:border-safari-gold/50 hover:shadow-safari-gold/20 cursor-pointer"
+            >
+              <div class="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-safari-gold/20 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+              <div class="relative h-56 sm:h-64 overflow-hidden">
+                <img
+                  :src="pkg.hero_image?.cover || pkg.hero_image?.url || pkg.images?.[0] || '/images/safari/beach-1.jpg'"
+                  :alt="pkg.title"
+                  class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  loading="lazy"
+                  @error="(e) => { (e.target as HTMLImageElement).src = '/images/safari/beach-1.jpg'; }"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/30"></div>
+                <div v-if="pkg.is_featured" class="absolute left-5 sm:left-6 top-5 sm:top-6 z-10">
+                  <span class="inline-flex items-center rounded-full bg-safari-gold px-4 py-2 text-xs font-bold uppercase tracking-wider text-charcoal shadow-glow-gold backdrop-blur-sm">
+                    Featured
+                  </span>
+                </div>
+                <div class="absolute inset-x-5 sm:inset-x-6 bottom-5 sm:bottom-6 z-10">
+                  <h3 class="text-xl sm:text-2xl font-heading font-bold text-white mb-2 transition-transform duration-300 group-hover:scale-105">{{ pkg.title }}</h3>
+                  <div class="flex items-center gap-3 text-sm font-semibold text-white/90 mb-2">
+                    <span v-if="pkg.duration_days" class="flex items-center gap-1.5">
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      {{ pkg.duration_days }} days
+                    </span>
+                    <span v-if="pkg.price_from" class="text-safari-gold font-bold">
+                      From ${{ Number(pkg.price_from).toLocaleString() }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="relative flex h-full flex-col gap-4 p-6 sm:p-8">
+                <p v-if="pkg.short_description" class="text-sm sm:text-base leading-relaxed text-white/80 line-clamp-2">
+                  {{ pkg.short_description }}
+                </p>
+                <div class="mt-auto flex items-center justify-between pt-4 border-t border-white/20 text-sm font-bold uppercase tracking-[0.3em] text-safari-gold transition-all duration-300 group-hover:gap-4">
+                  <span>View Package</span>
+                  <span aria-hidden="true" class="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                </div>
+              </div>
+              <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-0 bg-gradient-to-r from-safari-gold to-safari-green transition-all duration-500 group-hover:w-3/4 rounded-full"></div>
+            </article>
+          </div>
+
+          <div v-else-if="isLoadingTourPackages" class="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-12">
+            <div v-for="i in 3" :key="i" class="h-[500px] rounded-2xl bg-white/10 animate-pulse"></div>
+          </div>
+
+          <div class="text-center">
+            <router-link
+              to="/tour-packages"
+              class="group relative overflow-hidden inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-safari-gold via-safari-gold/95 to-orange-500 px-8 sm:px-10 py-4 sm:py-5 text-sm sm:text-base font-bold text-charcoal shadow-lg transition-all duration-300 hover:from-safari-gold-light hover:via-safari-gold hover:to-orange-400 hover:shadow-2xl hover:shadow-safari-gold/40 hover:scale-105"
+            >
+              <span class="relative z-10 flex items-center">
+                View All Packages
+                <svg class="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+              </span>
+              <div class="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+            </router-link>
           </div>
         </div>
       </section>
