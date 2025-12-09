@@ -74,46 +74,51 @@ class TourPackageController extends Controller
 
         $package = TourPackage::create($validated);
 
+        $uploadErrors = [];
+
         // Handle hero image
-        \Log::info('Checking for hero_image file', [
-            'hasFile' => $request->hasFile('hero_image'),
-            'has' => $request->has('hero_image'),
-            'all' => array_keys($request->all()),
-        ]);
-        
         if ($request->hasFile('hero_image')) {
             try {
                 $media = $package->addMediaFromRequest('hero_image')
                     ->preservingOriginal()
                     ->toMediaCollection('hero');
-                \Log::info('Hero image uploaded successfully', ['media_id' => $media->id]);
             } catch (\Exception $e) {
                 \Log::error('Failed to upload hero image: ' . $e->getMessage(), [
                     'trace' => $e->getTraceAsString()
                 ]);
+                $uploadErrors['hero_image'] = 'The hero image failed to upload.';
             }
         }
 
         // Handle gallery images
-        \Log::info('Checking for gallery_images files', [
-            'hasFile' => $request->hasFile('gallery_images'),
-            'has' => $request->has('gallery_images'),
-        ]);
-        
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $index => $image) {
                 try {
                     $media = $package->addMedia($image->getRealPath())
                         ->preservingOriginal()
                         ->toMediaCollection('gallery');
-                    \Log::info('Gallery image uploaded successfully', ['index' => $index, 'media_id' => $media->id]);
                 } catch (\Exception $e) {
                     \Log::error('Failed to upload gallery image: ' . $e->getMessage(), [
                         'index' => $index,
                         'trace' => $e->getTraceAsString()
                     ]);
+                    $uploadErrors["gallery_images.{$index}"] = "The gallery_images.{$index} failed to upload.";
                 }
             }
+        }
+
+        // If there were upload errors, return with validation errors
+        if (!empty($uploadErrors)) {
+            // Delete the package if uploads failed to avoid orphaned records
+            try {
+                $package->delete();
+            } catch (\Exception $e) {
+                \Log::error('Failed to delete package after upload error: ' . $e->getMessage());
+            }
+            
+            return redirect()->back()
+                ->withErrors($uploadErrors)
+                ->withInput();
         }
 
         return redirect()->route('admin.tour-packages.index')
@@ -221,3 +226,4 @@ class TourPackageController extends Controller
             ->with('success', 'Tour package deleted successfully.');
     }
 }
+
