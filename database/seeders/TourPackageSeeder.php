@@ -145,11 +145,36 @@ class TourPackageSeeder extends Seeder
             // Remove images from package data
             unset($packageData['gallery_images'], $packageData['hero_image']);
 
-            // Create or update the package
-            $package = TourPackage::updateOrCreate(
-                ['slug' => $packageData['slug']],
-                $packageData
-            );
+            // Check if package exists first to avoid duplicate key errors
+            $slug = $packageData['slug'];
+            $package = TourPackage::where('slug', $slug)->first();
+            
+            if ($package) {
+                // Update existing package
+                $package->update($packageData);
+            } else {
+                // Create new package with error handling
+                try {
+                    $package = TourPackage::create($packageData);
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // If duplicate key error (race condition), find and update
+                    if (str_contains($e->getMessage(), 'duplicate key') || $e->getCode() == '23505') {
+                        $package = TourPackage::where('slug', $slug)->first();
+                        if (!$package) {
+                            // If still not found, skip this iteration
+                            continue;
+                        }
+                        $package->update($packageData);
+                    } else {
+                        throw $e;
+                    }
+                }
+            }
+            
+            // Ensure package exists before proceeding with media
+            if (!$package) {
+                continue;
+            }
 
             // Add hero image
             if ($heroImage && file_exists($heroImage)) {

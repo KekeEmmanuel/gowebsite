@@ -167,25 +167,23 @@ class ItinerarySeeder extends Seeder
         foreach ($itineraries as $itineraryData) {
             $slug = $itineraryData['slug'];
             
+            // Use updateOrCreate which handles both insert and update
+            // This is the safest approach for avoiding duplicate key errors
             try {
-                // Try to find existing itinerary
-                $itinerary = Itinerary::where('slug', $slug)->first();
-                
-                if ($itinerary) {
-                    // Update existing itinerary
-                    $itinerary->update($itineraryData);
-                } else {
-                    // Create new itinerary
-                    Itinerary::create($itineraryData);
-                }
+                Itinerary::updateOrCreate(
+                    ['slug' => $slug],
+                    $itineraryData
+                );
             } catch (\Illuminate\Database\QueryException $e) {
-                // If duplicate key error, try to update instead
-                if ($e->getCode() == '23505' || str_contains($e->getMessage(), 'duplicate key')) {
+                // If still getting duplicate key error (shouldn't happen with updateOrCreate, but just in case)
+                if (str_contains($e->getMessage(), 'duplicate key') || $e->getCode() == '23505') {
+                    // Record must exist, just update it
                     $itinerary = Itinerary::where('slug', $slug)->first();
                     if ($itinerary) {
                         $itinerary->update($itineraryData);
                     }
                 } else {
+                    // Re-throw if it's a different error
                     throw $e;
                 }
             }
