@@ -75,20 +75,31 @@ class TourPackageController extends Controller
         // Remove file fields from validated data before creating model
         unset($validated['hero_image'], $validated['gallery_images']);
 
-        // Try to create with base slug first, catch duplicate and retry with unique slug
+        // Ensure slug is unique using database transaction with locking
         $package = null;
         $slug = $baseSlug;
         
         try {
-            // First attempt with base slug
-            $validated['slug'] = $slug;
-            $package = TourPackage::create($validated);
+            $package = DB::transaction(function () use ($validated, $baseSlug, &$slug) {
+                // Check if slug exists with lock to prevent race conditions
+                $existing = TourPackage::where('slug', $baseSlug)->lockForUpdate()->first();
+                
+                if ($existing) {
+                    // Slug exists, generate unique one
+                    $slug = $baseSlug . '-' . (int)(microtime(true) * 1000) . '-' . Str::random(8);
+                } else {
+                    $slug = $baseSlug;
+                }
+                
+                $validated['slug'] = $slug;
+                return TourPackage::create($validated);
+            });
         } catch (\Illuminate\Database\QueryException $e) {
-            // Handle unique constraint violation - retry with guaranteed unique slug
+            // Handle unique constraint violation - generate truly unique slug
             if ($e->getCode() == '23505' || str_contains($e->getMessage(), 'duplicate key')) {
                 try {
                     // Generate guaranteed unique slug using microtime and random string
-                    $slug = $baseSlug . '-' . (int)(microtime(true) * 1000) . '-' . Str::random(8);
+                    $slug = $baseSlug . '-' . (int)(microtime(true) * 1000) . '-' . Str::random(12);
                     $validated['slug'] = $slug;
                     $package = TourPackage::create($validated);
                 } catch (\Exception $retryException) {
