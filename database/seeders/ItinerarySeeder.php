@@ -164,13 +164,31 @@ class ItinerarySeeder extends Seeder
             ],
         ];
 
-        foreach ($itineraries as $itinerary) {
-            Itinerary::updateOrCreate(
-                [
-                    'slug' => $itinerary['slug'],
-                ],
-                $itinerary
-            );
+        foreach ($itineraries as $itineraryData) {
+            $slug = $itineraryData['slug'];
+            
+            try {
+                // Try to find existing itinerary
+                $itinerary = Itinerary::where('slug', $slug)->first();
+                
+                if ($itinerary) {
+                    // Update existing itinerary
+                    $itinerary->update($itineraryData);
+                } else {
+                    // Create new itinerary
+                    Itinerary::create($itineraryData);
+                }
+            } catch (\Illuminate\Database\QueryException $e) {
+                // If duplicate key error, try to update instead
+                if ($e->getCode() == '23505' || str_contains($e->getMessage(), 'duplicate key')) {
+                    $itinerary = Itinerary::where('slug', $slug)->first();
+                    if ($itinerary) {
+                        $itinerary->update($itineraryData);
+                    }
+                } else {
+                    throw $e;
+                }
+            }
         }
     }
 
