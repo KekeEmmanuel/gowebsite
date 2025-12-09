@@ -75,46 +75,56 @@ class TourPackageController extends Controller
         // Remove file fields from validated data before creating model
         unset($validated['hero_image'], $validated['gallery_images']);
 
-        // Ensure slug is unique using database transaction with locking
-        $package = null;
+        // Ensure slug is unique - check first and generate unique if needed
         $slug = $baseSlug;
         
-        try {
-            $package = DB::transaction(function () use ($validated, $baseSlug, &$slug) {
-                // Check if slug exists with lock to prevent race conditions
-                $existing = TourPackage::where('slug', $baseSlug)->lockForUpdate()->first();
+        // Check if base slug exists
+        if (TourPackage::where('slug', $slug)->exists()) {
+            // Generate unique slug immediately
+            $slug = $baseSlug . '-' . (int)(microtime(true) * 1000) . '-' . Str::random(8);
+        }
+        
+        $validated['slug'] = $slug;
+        $package = null;
+        
+        // Try to create with retry mechanism for race conditions
+        $maxRetries = 3;
+        for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
+            try {
+                $package = TourPackage::create($validated);
+                break; // Success, exit loop
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Handle unique constraint violation - PostgreSQL error code is 23505
+                $errorCode = $e->getCode();
+                $errorMessage = $e->getMessage();
+                $isDuplicateKey = ($errorCode == '23505' || $errorCode == 23505 || 
+                                  str_contains($errorMessage, 'duplicate key') || 
+                                  str_contains($errorMessage, 'Unique violation'));
                 
-                if ($existing) {
-                    // Slug exists, generate unique one
-                    $slug = $baseSlug . '-' . (int)(microtime(true) * 1000) . '-' . Str::random(8);
-                } else {
-                    $slug = $baseSlug;
-                }
-                
-                $validated['slug'] = $slug;
-                return TourPackage::create($validated);
-            });
-        } catch (\Illuminate\Database\QueryException $e) {
-            // Handle unique constraint violation - generate truly unique slug
-            if ($e->getCode() == '23505' || str_contains($e->getMessage(), 'duplicate key')) {
-                try {
-                    // Generate guaranteed unique slug using microtime and random string
+                if ($isDuplicateKey && $attempt < $maxRetries - 1) {
+                    // Generate new unique slug for retry
                     $slug = $baseSlug . '-' . (int)(microtime(true) * 1000) . '-' . Str::random(12);
                     $validated['slug'] = $slug;
-                    $package = TourPackage::create($validated);
-                } catch (\Exception $retryException) {
-                    \Log::error('Failed to create tour package after retry: ' . $retryException->getMessage(), [
-                        'original_error' => $e->getMessage(),
-                        'retry_error' => $retryException->getMessage(),
+                    \Log::warning('Duplicate slug detected, retrying with new slug', [
+                        'attempt' => $attempt + 1,
+                        'new_slug' => $slug,
+                        'error_code' => $errorCode,
+                        'error_message' => $errorMessage
+                    ]);
+                    continue; // Retry
+                } else {
+                    // Max retries reached or different error
+                    \Log::error('Failed to create tour package: ' . $errorMessage, [
+                        'trace' => $e->getTraceAsString(),
                         'slug' => $slug,
-                        'trace' => $retryException->getTraceAsString()
+                        'attempt' => $attempt + 1,
+                        'error_code' => $errorCode
                     ]);
                     return redirect()->back()
-                        ->withErrors(['error' => 'Failed to create tour package. Please try again with a different title.'])
+                        ->withErrors(['error' => 'Failed to create tour package. The slug already exists. Please try with a different title.'])
                         ->withInput();
                 }
-            } else {
-                // Different database error
+            } catch (\Exception $e) {
                 \Log::error('Failed to create tour package: ' . $e->getMessage(), [
                     'trace' => $e->getTraceAsString(),
                     'data' => $validated
@@ -123,19 +133,11 @@ class TourPackageController extends Controller
                     ->withErrors(['error' => 'Failed to create tour package: ' . $e->getMessage()])
                     ->withInput();
             }
-        } catch (\Exception $e) {
-            \Log::error('Failed to create tour package: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'data' => $validated
-            ]);
-            return redirect()->back()
-                ->withErrors(['error' => 'Failed to create tour package: ' . $e->getMessage()])
-                ->withInput();
         }
         
         if (!$package) {
             return redirect()->back()
-                ->withErrors(['error' => 'Failed to create tour package. Please try again.'])
+                ->withErrors(['error' => 'Failed to create tour package after multiple attempts. Please try again with a different title.'])
                 ->withInput();
         }
 
