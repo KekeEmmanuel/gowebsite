@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\TourPackage;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class TourPackageSeeder extends Seeder
 {
@@ -145,11 +146,32 @@ class TourPackageSeeder extends Seeder
             // Remove images from package data
             unset($packageData['gallery_images'], $packageData['hero_image']);
 
-            // Create or update the package
-            $package = TourPackage::updateOrCreate(
-                ['slug' => $packageData['slug']],
-                $packageData
-            );
+            // Use transaction to handle race conditions
+            try {
+                $package = DB::transaction(function () use ($packageData) {
+                    // Use firstOrCreate to handle duplicates safely
+                    return TourPackage::firstOrCreate(
+                        ['slug' => $packageData['slug']],
+                        $packageData
+                    );
+                });
+            } catch (\Illuminate\Database\QueryException $e) {
+                // If duplicate key error, try to find existing package
+                if ($e->getCode() == '23505' || str_contains($e->getMessage(), 'duplicate key')) {
+                    $package = TourPackage::where('slug', $packageData['slug'])->first();
+                    if ($package) {
+                        // Update existing package
+                        $package->update($packageData);
+                    } else {
+                        // If still can't find it, skip this package
+                        \Log::warning('Skipping package due to duplicate slug: ' . $packageData['slug']);
+                        continue;
+                    }
+                } else {
+                    // Re-throw other exceptions
+                    throw $e;
+                }
+            }
 
             // Add hero image
             if ($heroImage && file_exists($heroImage)) {
