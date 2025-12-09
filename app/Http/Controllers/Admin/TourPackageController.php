@@ -7,7 +7,6 @@ use App\Models\TourPackage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -51,7 +50,7 @@ class TourPackageController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:tour_packages,slug',
             'short_description' => 'nullable|string|max:500',
             'description' => 'required|string',
             'price_from' => 'nullable|numeric|min:0',
@@ -67,81 +66,21 @@ class TourPackageController extends Controller
 
         // Generate slug if not provided
         if (empty($validated['slug'])) {
-            $baseSlug = Str::slug($validated['title']);
-        } else {
-            $baseSlug = Str::slug($validated['slug']);
+            $validated['slug'] = Str::slug($validated['title']);
         }
-        
+
         // Remove file fields from validated data before creating model
         unset($validated['hero_image'], $validated['gallery_images']);
 
-        // Ensure slug is unique - check first and generate unique if needed
-        $slug = $baseSlug;
-        
-        // Check if base slug exists
-        if (TourPackage::where('slug', $slug)->exists()) {
-            // Generate unique slug immediately
-            $slug = $baseSlug . '-' . (int)(microtime(true) * 1000) . '-' . Str::random(8);
-        }
-        
-        $validated['slug'] = $slug;
-        $package = null;
-        
-        // Try to create with retry mechanism for race conditions
-        $maxRetries = 3;
-        for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
-            try {
-                $package = TourPackage::create($validated);
-                break; // Success, exit loop
-            } catch (\Illuminate\Database\QueryException $e) {
-                // Handle unique constraint violation - PostgreSQL error code is 23505
-                $errorCode = $e->getCode();
-                $errorMessage = $e->getMessage();
-                $isDuplicateKey = ($errorCode == '23505' || $errorCode == 23505 || 
-                                  str_contains($errorMessage, 'duplicate key') || 
-                                  str_contains($errorMessage, 'Unique violation'));
-                
-                if ($isDuplicateKey && $attempt < $maxRetries - 1) {
-                    // Generate new unique slug for retry
-                    $slug = $baseSlug . '-' . (int)(microtime(true) * 1000) . '-' . Str::random(12);
-                    $validated['slug'] = $slug;
-                    \Log::warning('Duplicate slug detected, retrying with new slug', [
-                        'attempt' => $attempt + 1,
-                        'new_slug' => $slug,
-                        'error_code' => $errorCode,
-                        'error_message' => $errorMessage
-                    ]);
-                    continue; // Retry
-                } else {
-                    // Max retries reached or different error
-                    \Log::error('Failed to create tour package: ' . $errorMessage, [
-                        'trace' => $e->getTraceAsString(),
-                        'slug' => $slug,
-                        'attempt' => $attempt + 1,
-                        'error_code' => $errorCode
-                    ]);
-                    return redirect()->back()
-                        ->withErrors(['error' => 'Failed to create tour package. The slug already exists. Please try with a different title.'])
-                        ->withInput();
-                }
-            } catch (\Exception $e) {
-                \Log::error('Failed to create tour package: ' . $e->getMessage(), [
-                    'trace' => $e->getTraceAsString(),
-                    'data' => $validated
-                ]);
-                return redirect()->back()
-                    ->withErrors(['error' => 'Failed to create tour package: ' . $e->getMessage()])
-                    ->withInput();
-            }
-        }
-        
-        if (!$package) {
-            return redirect()->back()
-                ->withErrors(['error' => 'Failed to create tour package after multiple attempts. Please try again with a different title.'])
-                ->withInput();
-        }
+        $package = TourPackage::create($validated);
 
         // Handle hero image
+        \Log::info('Checking for hero_image file', [
+            'hasFile' => $request->hasFile('hero_image'),
+            'has' => $request->has('hero_image'),
+            'all' => array_keys($request->all()),
+        ]);
+        
         if ($request->hasFile('hero_image')) {
             try {
                 $media = $package->addMediaFromRequest('hero_image')
@@ -150,14 +89,17 @@ class TourPackageController extends Controller
                 \Log::info('Hero image uploaded successfully', ['media_id' => $media->id]);
             } catch (\Exception $e) {
                 \Log::error('Failed to upload hero image: ' . $e->getMessage(), [
-                    'trace' => $e->getTraceAsString(),
-                    'package_id' => $package->id
+                    'trace' => $e->getTraceAsString()
                 ]);
-                // Don't fail the entire request if image upload fails
             }
         }
 
         // Handle gallery images
+        \Log::info('Checking for gallery_images files', [
+            'hasFile' => $request->hasFile('gallery_images'),
+            'has' => $request->has('gallery_images'),
+        ]);
+        
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $index => $image) {
                 try {
@@ -168,10 +110,8 @@ class TourPackageController extends Controller
                 } catch (\Exception $e) {
                     \Log::error('Failed to upload gallery image: ' . $e->getMessage(), [
                         'index' => $index,
-                        'trace' => $e->getTraceAsString(),
-                        'package_id' => $package->id
+                        'trace' => $e->getTraceAsString()
                     ]);
-                    // Continue with other images even if one fails
                 }
             }
         }

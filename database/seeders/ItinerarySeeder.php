@@ -165,28 +165,12 @@ class ItinerarySeeder extends Seeder
         ];
 
         foreach ($itineraries as $itinerary) {
-            // Check if itinerary already exists by slug
-            $existing = Itinerary::where('slug', $itinerary['slug'])->first();
-            
-            if ($existing) {
-                // Update existing record
-                $existing->update($itinerary);
-            } else {
-                // Create new record, but catch any unique constraint violations
-                try {
-                    Itinerary::create($itinerary);
-                } catch (\Illuminate\Database\QueryException $e) {
-                    // If unique constraint violation, try to find and update
-                    if ($e->getCode() == '23505' || str_contains($e->getMessage(), 'duplicate key')) {
-                        $existing = Itinerary::where('slug', $itinerary['slug'])->first();
-                        if ($existing) {
-                            $existing->update($itinerary);
-                        }
-                    } else {
-                        throw $e;
-                    }
-                }
-            }
+            Itinerary::updateOrCreate(
+                [
+                    'slug' => $itinerary['slug'],
+                ],
+                $itinerary
+            );
         }
     }
 

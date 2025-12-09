@@ -95,11 +95,6 @@ const submit = () => {
         </template>
 
         <div class="max-w-4xl">
-            <!-- General Error Display -->
-            <div v-if="$page.props.errors?.error" class="mb-6 rounded-lg bg-red-50 border border-red-200 p-4">
-                <p class="text-sm text-red-800">{{ $page.props.errors.error }}</p>
-            </div>
-            
             <form @submit.prevent="submit" class="space-y-6" enctype="multipart/form-data">
                 <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
                     <div class="p-6 space-y-6">
