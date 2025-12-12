@@ -1136,10 +1136,6 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
               <p class="mt-4 text-base leading-relaxed text-white/80">
                 {{ highlight.copy }}
               </p>
-              <div class="mt-6 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-safari-gold transition-all duration-300 group-hover:gap-3">
-                Learn More
-                <span aria-hidden="true" class="transition-transform duration-300 group-hover:translate-x-1">→</span>
-              </div>
               <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-0 bg-gradient-to-r from-safari-gold to-safari-green transition-all duration-500 group-hover:w-3/4 rounded-full"></div>
             </article>
           </div>
