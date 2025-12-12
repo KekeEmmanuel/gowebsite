@@ -108,6 +108,9 @@ $filesToCopy = [
     'database/seeders/ContactQuickFactSeeder.php',
     'database/seeders/DatabaseSeeder.php',
     'routes/web.php',
+    'app/Http/Controllers/Admin/ContactMessageController.php',
+    'app/Http/Controllers/Admin/ContactChannelController.php',
+    'app/Http/Controllers/Admin/ContactQuickFactController.php',
 ];
 
 foreach ($filesToCopy as $file) {
