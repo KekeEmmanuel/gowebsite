@@ -111,6 +111,7 @@ $filesToCopy = [
     'app/Http/Controllers/Admin/ContactMessageController.php',
     'app/Http/Controllers/Admin/ContactChannelController.php',
     'app/Http/Controllers/Admin/ContactQuickFactController.php',
+    'resources/marketing/pages/Home.vue',
 ];
 
 foreach ($filesToCopy as $file) {
