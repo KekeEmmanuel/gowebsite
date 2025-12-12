@@ -3,7 +3,9 @@
 use App\Http\Controllers\Api\AboutHighlightController;
 use App\Http\Controllers\Api\AboutStatController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\ContactChannelController;
 use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\ContactQuickFactController;
 use App\Http\Controllers\Api\DestinationController;
 use App\Http\Controllers\Api\FeatureCardController;
 use App\Http\Controllers\Api\HeroSlideController;
@@ -31,6 +33,8 @@ Route::middleware(['throttle:60,1'])->group(function (): void {
     Route::get('/feature-cards', [FeatureCardController::class, 'index'])->name('api.feature-cards.index');
     Route::get('/about-stats', [AboutStatController::class, 'index'])->name('api.about-stats.index');
     Route::get('/about-highlights', [AboutHighlightController::class, 'index'])->name('api.about-highlights.index');
+    Route::get('/contact-channels', [ContactChannelController::class, 'index'])->name('api.contact-channels.index');
+    Route::get('/contact-quick-facts', [ContactQuickFactController::class, 'index'])->name('api.contact-quick-facts.index');
     Route::get('/lodges', [LodgeController::class, 'index'])->name('api.lodges.index');
     Route::get('/lodges/{slug}', [LodgeController::class, 'show'])->name('api.lodges.show');
 

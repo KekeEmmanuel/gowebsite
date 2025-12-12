@@ -3,7 +3,6 @@ import { computed, h, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   DEFAULT_DESTINATIONS,
-  DEFAULT_ITINERARIES,
   DEFAULT_LODGES,
   DEFAULT_FEATURE_CARDS,
   DEFAULT_HERO_SLIDES,
@@ -202,46 +201,7 @@ onMounted(async () => {
     featureObserver.observe(featureSection.value);
   }
 
-  // Fetch safari packages (itineraries) with timeout and fallback
-  isLoadingSafaris.value = true;
-  try {
-    const response = await fetchWithTimeout('/api/itineraries?per_page=6', {}, 8000);
-    if (!response.ok) {
-      console.error('API Error:', response.status, response.statusText);
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    
-    // Handle paginated response - Laravel returns { data: [...], links: {...}, meta: {...} }
-    const itineraries = Array.isArray(data) ? data : (data.data || []);
-    
-    if (itineraries && itineraries.length > 0) {
-      safariPackages.value = itineraries.map((itinerary: any) => ({
-        id: itinerary.id,
-        slug: itinerary.slug,
-        title: itinerary.title || '',
-        summary: itinerary.summary || '',
-        meta: itinerary.meta || `${itinerary.duration_days || ''} days`,
-        image: itinerary.image || itinerary.hero_image?.url || '/images/safari/wildlife-savannah.jpg',
-        badge: itinerary.badge || 'Signature Collection',
-        highlights: Array.isArray(itinerary.highlights) ? itinerary.highlights : [],
-        duration_days: itinerary.duration_days || null,
-        price_from: itinerary.price_from || null,
-        difficulty: itinerary.difficulty || null,
-        service_type: itinerary.service_type?.name || null,
-        destination: itinerary.destination?.name || null,
-      }));
-    } else {
-      console.warn('No itineraries found in API response, using defaults');
-      safariPackages.value = [...DEFAULT_ITINERARIES];
-    }
-  } catch (error) {
-    console.error('Error fetching safari packages (network/timeout/error):', error);
-    // Always use defaults on any error (network, timeout, API error, etc.)
-    safariPackages.value = [...DEFAULT_ITINERARIES];
-  } finally {
-    isLoadingSafaris.value = false;
-  }
+  // Removed safari packages fetching - using tour packages instead
 
   // Fetch destinations with timeout and fallback
   try {
@@ -316,10 +276,24 @@ onMounted(async () => {
     }
     const data = await response.json();
     
-    // Handle paginated response
-    const packages = Array.isArray(data) ? data : (data.data || []);
+    // Handle paginated response - Laravel pagination returns { data: [...], links: {...}, meta: {...} }
+    // Also handle direct array response
+    let packages: any[] = [];
+    if (Array.isArray(data)) {
+      packages = data;
+    } else if (data && typeof data === 'object') {
+      packages = data.data || [];
+    }
     
-    if (packages.length > 0) {
+    console.log('Tour packages API response:', { 
+      isArray: Array.isArray(data), 
+      hasDataKey: !!(data && data.data), 
+      packagesCount: packages.length,
+      dataKeys: data ? Object.keys(data) : [],
+      rawData: data
+    });
+    
+    if (packages && packages.length > 0) {
       // Sort to show featured first, then by display_order
       const sortedPackages = [...packages].sort((a: any, b: any) => {
         if (a.is_featured && !b.is_featured) return -1;
@@ -340,11 +314,103 @@ onMounted(async () => {
         gallery: pkg.gallery || [],
         images: pkg.images || [],
       }));
+      
+      console.log('Tour packages loaded successfully:', tourPackages.value.length, tourPackages.value);
+    } else {
+      console.warn('No tour packages found in API response. Packages array:', packages);
     }
   } catch (error) {
     console.error('Error fetching tour packages (network/timeout/error):', error);
+    // Set empty array on error to show empty state
+    tourPackages.value = [];
   } finally {
     isLoadingTourPackages.value = false;
+  }
+
+  // Fetch contact channels
+  try {
+    const response = await fetchWithTimeout('/api/contact-channels', {}, 8000);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    const channels = Array.isArray(data) ? data : (data.data || []);
+    
+    if (channels.length > 0) {
+      contactChannels.value = channels.map((channel: any) => ({
+        label: channel.label || '',
+        value: channel.value || '',
+        detail: channel.detail || '',
+      }));
+    } else {
+      // Fallback to defaults
+      contactChannels.value = [
+        {
+          label: 'Call',
+          value: '+255 (0) 742 123 456',
+          detail: 'Daily 08:00 – 20:00 East Africa Time',
+        },
+        {
+          label: 'Email',
+          value: 'bookings@gotanzaniasafari.com',
+          detail: 'Expect a crafted itinerary within 24 hours',
+        },
+        {
+          label: 'WhatsApp',
+          value: '+255 (0) 742 123 456',
+          detail: 'Instant updates &amp; on-trip assistance',
+        },
+      ];
+    }
+  } catch (error) {
+    console.error('Error fetching contact channels:', error);
+    // Fallback to defaults
+    contactChannels.value = [
+      {
+        label: 'Call',
+        value: '+255 (0) 742 123 456',
+        detail: 'Daily 08:00 – 20:00 East Africa Time',
+      },
+      {
+        label: 'Email',
+        value: 'bookings@gotanzaniasafari.com',
+        detail: 'Expect a crafted itinerary within 24 hours',
+      },
+      {
+        label: 'WhatsApp',
+        value: '+255 (0) 742 123 456',
+        detail: 'Instant updates &amp; on-trip assistance',
+      },
+    ];
+  }
+
+  // Fetch contact quick facts
+  try {
+    const response = await fetchWithTimeout('/api/contact-quick-facts', {}, 8000);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    const facts = Array.isArray(data) ? data : (data.data || []);
+    
+    if (facts.length > 0) {
+      contactQuickFacts.value = facts.map((fact: any) => fact.fact || fact);
+    } else {
+      // Fallback to defaults
+      contactQuickFacts.value = [
+        'Dedicated concierge from pre-trip briefing to touchdown back home.',
+        'Access to a private guest portal with live itinerary updates.',
+        'Emergency response network spanning Tanzania and Zanzibar.',
+      ];
+    }
+  } catch (error) {
+    console.error('Error fetching contact quick facts:', error);
+    // Fallback to defaults
+    contactQuickFacts.value = [
+      'Dedicated concierge from pre-trip briefing to touchdown back home.',
+      'Access to a private guest portal with live itinerary updates.',
+      'Emergency response network spanning Tanzania and Zanzibar.',
+    ];
   }
 });
 
@@ -427,6 +493,60 @@ const scrollToTop = () => {
   });
 };
 
+// Contact form submission handler
+const handleContactSubmit = async () => {
+  contactFormError.value = null;
+  contactFormSuccess.value = false;
+  isSubmittingContact.value = true;
+
+  try {
+    const response = await fetch('/api/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        name: contactForm.value.name,
+        email: contactForm.value.email,
+        phone: contactForm.value.phone || null,
+        service_type_id: contactForm.value.service_type_id || null,
+        message: contactForm.value.message,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to send message. Please try again.');
+    }
+
+    // Success
+    contactFormSuccess.value = true;
+    contactForm.value = {
+      name: '',
+      email: '',
+      phone: '',
+      travelers: '',
+      service_type_id: '',
+      message: '',
+    };
+
+    // Scroll to success message
+    setTimeout(() => {
+      const formElement = document.querySelector('#contact form');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 100);
+  } catch (error: any) {
+    console.error('Error submitting contact form:', error);
+    contactFormError.value = error.message || 'Failed to send message. Please try again.';
+  } finally {
+    isSubmittingContact.value = false;
+  }
+};
+
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, { passive: true });
 });
@@ -448,24 +568,7 @@ onBeforeUnmount(() => {
   }
 });
 
-type SafariPackage = {
-  id?: number;
-  slug?: string;
-  title: string;
-  summary: string;
-  meta: string;
-  image: string;
-  badge: string;
-  highlights: string[];
-  duration_days?: number | null;
-  price_from?: number | string | null;
-  difficulty?: string | null;
-  service_type?: string | null;
-  destination?: string | null;
-};
-
-const safariPackages = ref<SafariPackage[]>([]);
-const isLoadingSafaris = ref(true);
+// Removed SafariPackage type and safariPackages - using tourPackages instead
 
 type DestinationSpot = {
   name: string;
@@ -502,6 +605,20 @@ type TourPackage = {
 const tourPackages = ref<TourPackage[]>([]);
 const isLoadingTourPackages = ref(true);
 
+// Contact form state
+const contactForm = ref({
+  name: '',
+  email: '',
+  phone: '',
+  travelers: '',
+  service_type_id: '',
+  message: '',
+});
+
+const isSubmittingContact = ref(false);
+const contactFormError = ref<string | null>(null);
+const contactFormSuccess = ref(false);
+
 type AboutStat = {
   value: string;
   label: string;
@@ -515,29 +632,9 @@ type AboutHighlight = {
 const aboutStats = ref<AboutStat[]>([]);
 const aboutHighlights = ref<AboutHighlight[]>([]);
 
-const contactChannels = [
-  {
-    label: 'Call',
-    value: '+255 (0) 742 123 456',
-    detail: 'Daily 08:00 – 20:00 East Africa Time',
-  },
-  {
-    label: 'Email',
-    value: 'bookings@gotanzaniasafari.com',
-    detail: 'Expect a crafted itinerary within 24 hours',
-  },
-  {
-    label: 'WhatsApp',
-    value: '+255 (0) 742 123 456',
-    detail: 'Instant updates &amp; on-trip assistance',
-  },
-];
+const contactChannels = ref<Array<{ label: string; value: string; detail: string }>>([]);
 
-const contactQuickFacts = [
-  'Dedicated concierge from pre-trip briefing to touchdown back home.',
-  'Access to a private guest portal with live itinerary updates.',
-  'Emergency response network spanning Tanzania and Zanzibar.',
-];
+const contactQuickFacts = ref<string[]>([]);
 
 const featureSection = ref<HTMLElement | null>(null);
 const featureVisible = ref(false);
@@ -711,12 +808,6 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
             </a>
             <a 
               class="rounded-full border border-safari-gold/40 bg-black/60 backdrop-blur-md px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.25em] text-white shadow-medium transition-all duration-300 hover:bg-safari-gold hover:text-charcoal hover:border-safari-gold hover:shadow-glow-gold hover:scale-110" 
-              href="#safaris"
-            >
-              Safaris
-            </a>
-            <a 
-              class="rounded-full border border-safari-gold/40 bg-black/60 backdrop-blur-md px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.25em] text-white shadow-medium transition-all duration-300 hover:bg-safari-gold hover:text-charcoal hover:border-safari-gold hover:shadow-glow-gold hover:scale-110" 
               href="#destinations"
             >
               Destinations
@@ -725,7 +816,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
               to="/tour-packages"
               class="rounded-full border border-safari-gold/40 bg-black/60 backdrop-blur-md px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.25em] text-white shadow-medium transition-all duration-300 hover:bg-safari-gold hover:text-charcoal hover:border-safari-gold hover:shadow-glow-gold hover:scale-110" 
             >
-              Packages
+              Safaris
             </router-link>
             <a 
               class="rounded-full border border-safari-gold/40 bg-black/60 backdrop-blur-md px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.25em] text-white shadow-medium transition-all duration-300 hover:bg-safari-gold hover:text-charcoal hover:border-safari-gold hover:shadow-glow-gold hover:scale-110" 
@@ -998,10 +1089,10 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                   </span>
                 </a>
                 <a
-                  href="#safaris"
+                  href="#packages"
                   class="group rounded-full border-2 border-safari-gold bg-white/10 backdrop-blur-sm px-8 py-4 text-sm font-semibold text-safari-gold transition-all duration-300 hover:bg-safari-gold hover:text-charcoal hover:shadow-lg hover:shadow-safari-gold/30 hover:scale-105"
                 >
-                  View Sample Safaris
+                  View Safaris
                   <span class="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
                 </a>
               </div>
@@ -1055,7 +1146,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
         </div>
       </section>
 
-      <section id="safaris" class="relative overflow-hidden bg-gradient-to-b from-safari-green via-safari-green-dark to-safari-green py-32 text-white">
+      <section id="packages" class="relative overflow-hidden bg-gradient-to-b from-safari-green via-safari-green-dark to-safari-green py-32 text-white">
         <!-- Animated background pattern -->
         <div class="absolute inset-0 opacity-10">
           <div class="absolute inset-0" style="background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.2) 1px, transparent 0); background-size: 50px 50px;"></div>
@@ -1070,7 +1161,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
             <div class="inline-flex items-center gap-3 mb-6">
               <div class="h-px w-12 bg-gradient-to-r from-transparent to-safari-gold/60"></div>
               <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
-                Signature Safaris
+                Safaris and Itineraries
               </p>
               <div class="h-px w-12 bg-gradient-to-l from-transparent to-safari-gold/60"></div>
             </div>
@@ -1084,88 +1175,127 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
             </p>
           </div>
 
-          <!-- Safari Packages Grid -->
-          <div v-if="safariPackages.length > 0" class="grid gap-10 md:grid-cols-2 lg:grid-cols-3 mb-20">
+          <!-- Tour Packages Grid -->
+          <div v-if="tourPackages.length > 0" class="grid gap-10 md:grid-cols-2 lg:grid-cols-3 mb-20">
             <article
-              v-for="(safari, index) in safariPackages"
-              :key="safari.id || safari.title || index"
-              class="group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/8 to-white/5 backdrop-blur-md shadow-xl transition-all duration-500 hover:-translate-y-3 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] hover:bg-gradient-to-br hover:from-white/15 hover:via-white/12 hover:to-white/8 hover:border-white/40 hover:border-safari-gold/30"
+              v-for="(pkg, index) in tourPackages"
+              :key="pkg.id || pkg.title || index"
+              @click="() => pkg.slug && router.push(`/tour-packages/${pkg.slug}`)"
+              class="group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/8 to-white/5 backdrop-blur-md shadow-xl transition-all duration-500 hover:-translate-y-3 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] hover:bg-gradient-to-br hover:from-white/15 hover:via-white/12 hover:to-white/8 hover:border-white/40 hover:border-safari-gold/30 cursor-pointer"
             >
               <!-- Image Container -->
               <div class="relative h-64 overflow-hidden">
                 <img
-                  :src="safari.image"
-                  :alt="safari.title"
+                  :src="pkg.hero_image?.cover || pkg.hero_image?.url || pkg.images?.[0] || '/images/safari/beach-1.jpg'"
+                  :alt="pkg.title"
                   class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                   loading="lazy"
+                  @error="(e) => { (e.target as HTMLImageElement).src = '/images/safari/beach-1.jpg'; }"
                 />
                 <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
                 
                 <!-- Badge -->
                 <div class="absolute left-6 top-6 z-10">
                   <span class="inline-flex items-center rounded-full bg-safari-gold px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-charcoal shadow-glow-gold backdrop-blur-sm">
-                    {{ safari.badge || 'Signature' }}
+                    {{ pkg.is_featured ? 'Featured' : 'Package' }}
                   </span>
                 </div>
 
                 <!-- Meta Info Overlay -->
                 <div class="absolute inset-x-6 bottom-6">
                   <div class="flex items-center gap-3 text-sm font-semibold text-white">
-                    <span v-if="safari.duration_days" class="flex items-center gap-1.5">
+                    <span v-if="pkg.duration_days" class="flex items-center gap-1.5">
                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
-                      {{ safari.duration_days }} days
+                      {{ pkg.duration_days }} days
                     </span>
-                    <span v-if="safari.difficulty" class="flex items-center gap-1.5">
+                    <span v-if="pkg.max_participants" class="flex items-center gap-1.5">
                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                       </svg>
-                      {{ safari.difficulty }}
+                      Max {{ pkg.max_participants }}
                     </span>
                   </div>
-                  <p v-if="safari.meta" class="mt-2 text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold/90" v-html="safari.meta"></p>
+                  <p v-if="pkg.price_from" class="mt-2 text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold/90">
+                    From ${{ Number(pkg.price_from).toLocaleString() }}
+                  </p>
                 </div>
               </div>
 
               <!-- Content -->
               <div class="flex flex-1 flex-col gap-5 p-8">
                 <div>
-                  <h3 class="text-2xl font-heading text-white mb-3 leading-tight" v-html="safari.title"></h3>
-                  <p v-if="safari.summary" class="text-sm leading-relaxed text-white/75 line-clamp-3">
-                    {{ safari.summary }}
+                  <h3 class="text-2xl font-heading text-white mb-3 leading-tight">{{ pkg.title }}</h3>
+                  <p v-if="pkg.short_description" class="text-sm leading-relaxed text-white/75 line-clamp-3">
+                    {{ pkg.short_description }}
                   </p>
                 </div>
 
                 <!-- Highlights -->
-                <div v-if="safari.highlights && safari.highlights.length > 0" class="space-y-2.5">
-                  <p class="text-xs font-semibold uppercase tracking-[0.3em] text-safari-gold mb-2">Highlights</p>
-                  <ul class="space-y-2 text-sm text-white/70">
-                    <li v-for="(point, idx) in safari.highlights.slice(0, 3)" :key="idx" class="flex items-start gap-3">
-                      <span aria-hidden="true" class="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-safari-gold"></span>
-                      <span class="flex-1" v-html="point"></span>
+                <div class="mt-2 space-y-3">
+                  <ul class="space-y-2.5">
+                    <li v-if="pkg.duration_days" class="flex items-start gap-3">
+                      <span class="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-safari-gold text-xs font-bold text-charcoal">
+                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                      </span>
+                      <p class="flex-1 text-xs leading-relaxed text-white/85">
+                        {{ pkg.duration_days }} day{{ pkg.duration_days > 1 ? 's' : '' }} immersive experience
+                      </p>
+                    </li>
+                    <li v-if="pkg.max_participants" class="flex items-start gap-3">
+                      <span class="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-safari-gold text-xs font-bold text-charcoal">
+                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                      </span>
+                      <p class="flex-1 text-xs leading-relaxed text-white/85">
+                        Small group experience (max {{ pkg.max_participants }} participants)
+                      </p>
+                    </li>
+                    <li v-if="pkg.is_featured" class="flex items-start gap-3">
+                      <span class="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-safari-gold text-xs font-bold text-charcoal">
+                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                        </svg>
+                      </span>
+                      <p class="flex-1 text-xs leading-relaxed text-white/85">
+                        Featured package with premium inclusions
+                      </p>
+                    </li>
+                    <li class="flex items-start gap-3">
+                      <span class="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-safari-gold text-xs font-bold text-charcoal">
+                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                      </span>
+                      <p class="flex-1 text-xs leading-relaxed text-white/85">
+                        Fully customizable itinerary
+                      </p>
                     </li>
                   </ul>
                 </div>
 
                 <!-- Price & Actions -->
                 <div class="mt-auto pt-6 border-t border-white/10">
-                  <div v-if="safari.price_from" class="mb-4">
+                  <div v-if="pkg.price_from" class="mb-4">
                     <p class="text-xs font-semibold uppercase tracking-[0.3em] text-white/60 mb-1">Starting from</p>
                     <p class="text-2xl font-bold text-safari-gold">
-                      ${{ typeof safari.price_from === 'number' ? safari.price_from.toLocaleString() : safari.price_from }}
+                      ${{ Number(pkg.price_from).toLocaleString() }}
                     </p>
                   </div>
-                  <div class="flex items-center justify-center">
-                    <a
-                      href="#contact"
+                  <div class="flex items-center justify-center" @click.stop>
+                    <router-link
+                      :to="`/tour-packages/${pkg.slug}`"
                       class="group flex items-center justify-center rounded-full border-2 border-white/40 bg-white/5 backdrop-blur-sm px-6 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:border-white hover:bg-white/20 hover:scale-105"
                     >
-                      Tailor
+                      View Details
                       <svg class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                       </svg>
-                    </a>
+                    </router-link>
                   </div>
                 </div>
               </div>
@@ -1178,122 +1308,17 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
           </div>
 
           <!-- Loading State -->
-          <div v-else-if="isLoadingSafaris" class="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-16">
+          <div v-else-if="isLoadingTourPackages" class="grid gap-10 md:grid-cols-2 lg:grid-cols-3 mb-20">
             <div v-for="i in 3" :key="i" class="h-[600px] rounded-[2rem] bg-white/5 animate-pulse"></div>
           </div>
 
           <!-- Empty State -->
           <div v-else class="text-center py-16">
-            <p class="text-white/60">No safaris available at the moment. Please check back later.</p>
+            <p class="text-white/60">No packages available at the moment. Please check back later.</p>
           </div>
 
           <!-- CTA Section -->
           <div class="mt-16 sm:mt-20 text-center">
-            <a
-              href="#contact"
-              class="group relative overflow-hidden inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-safari-gold via-safari-gold/95 to-orange-500 px-8 sm:px-10 py-4 sm:py-5 text-sm sm:text-base font-bold text-charcoal shadow-lg transition-all duration-300 hover:from-safari-gold-light hover:via-safari-gold hover:to-orange-400 hover:shadow-2xl hover:shadow-safari-gold/40 hover:scale-105"
-            >
-              <span class="relative z-10 flex items-center">
-                Plan Your Custom Safari
-                <svg class="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
-              </span>
-              <div class="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <section id="packages" class="relative overflow-hidden bg-gradient-to-b from-safari-green-dark via-charcoal to-charcoal-dark text-white py-24 sm:py-32">
-        <!-- Dark background with subtle image -->
-        <div class="absolute inset-0 opacity-[0.1] z-0">
-          <img
-            src="/images/safari/wildlife-giraffe.jpg"
-            alt=""
-            class="h-full w-full object-cover object-center"
-            loading="lazy"
-            @error="(e) => { (e.target as HTMLImageElement).src = '/images/safari/beach-1.jpg'; }"
-          />
-          <div class="absolute inset-0 bg-gradient-to-b from-charcoal/95 via-charcoal/90 to-charcoal/95"></div>
-        </div>
-        
-        <!-- Enhanced background patterns -->
-        <div class="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_70%_30%,rgba(217,154,56,0.12),transparent_60%)]"></div>
-        <div class="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_20%_80%,rgba(31,59,43,0.08),transparent_60%)]"></div>
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 z-0 h-px w-3/4 bg-gradient-to-r from-transparent via-safari-gold/40 to-transparent"></div>
-        <div class="relative z-10 mx-auto max-w-7xl px-6">
-          <div class="mb-16 sm:mb-20 text-center">
-            <div class="inline-flex items-center gap-3 mb-6">
-              <div class="h-px w-12 bg-gradient-to-r from-transparent to-safari-gold/60"></div>
-              <p class="text-xs font-bold uppercase tracking-[0.5em] text-safari-gold">
-                Tour Packages
-              </p>
-              <div class="h-px w-12 bg-gradient-to-l from-transparent to-safari-gold/60"></div>
-            </div>
-            <h2 class="text-4xl font-heading font-bold text-white leading-tight sm:text-5xl lg:text-6xl text-balance mb-6">
-              Customizable Tour Packages
-            </h2>
-            <p class="mx-auto max-w-3xl text-lg sm:text-xl leading-relaxed text-white/85">
-              Build your perfect Tanzanian adventure with our flexible tour packages. Choose locations, customize your itinerary, and create memories that last a lifetime.
-            </p>
-          </div>
-
-          <div v-if="tourPackages.length > 0" class="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-12">
-            <article
-              v-for="pkg in tourPackages"
-              :key="pkg.id"
-              @click="() => pkg.slug && router.push(`/tour-packages/${pkg.slug}`)"
-              class="group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-md shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:border-safari-gold/50 hover:shadow-safari-gold/20 cursor-pointer"
-            >
-              <div class="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-safari-gold/20 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
-              <div class="relative h-56 sm:h-64 overflow-hidden">
-                <img
-                  :src="pkg.hero_image?.cover || pkg.hero_image?.url || pkg.images?.[0] || '/images/safari/beach-1.jpg'"
-                  :alt="pkg.title"
-                  class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  loading="lazy"
-                  @error="(e) => { (e.target as HTMLImageElement).src = '/images/safari/beach-1.jpg'; }"
-                />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/30"></div>
-                <div v-if="pkg.is_featured" class="absolute left-5 sm:left-6 top-5 sm:top-6 z-10">
-                  <span class="inline-flex items-center rounded-full bg-safari-gold px-4 py-2 text-xs font-bold uppercase tracking-wider text-charcoal shadow-glow-gold backdrop-blur-sm">
-                    Featured
-                  </span>
-                </div>
-                <div class="absolute inset-x-5 sm:inset-x-6 bottom-5 sm:bottom-6 z-10">
-                  <h3 class="text-xl sm:text-2xl font-heading font-bold text-white mb-2 transition-transform duration-300 group-hover:scale-105">{{ pkg.title }}</h3>
-                  <div class="flex items-center gap-3 text-sm font-semibold text-white/90 mb-2">
-                    <span v-if="pkg.duration_days" class="flex items-center gap-1.5">
-                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                      {{ pkg.duration_days }} days
-                    </span>
-                    <span v-if="pkg.price_from" class="text-safari-gold font-bold">
-                      From ${{ Number(pkg.price_from).toLocaleString() }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div class="relative flex h-full flex-col gap-4 p-6 sm:p-8">
-                <p v-if="pkg.short_description" class="text-sm sm:text-base leading-relaxed text-white/80 line-clamp-2">
-                  {{ pkg.short_description }}
-                </p>
-                <div class="mt-auto flex items-center justify-between pt-4 border-t border-white/20 text-sm font-bold uppercase tracking-[0.3em] text-safari-gold transition-all duration-300 group-hover:gap-4">
-                  <span>View Package</span>
-                  <span aria-hidden="true" class="transition-transform duration-300 group-hover:translate-x-1">→</span>
-                </div>
-              </div>
-              <div class="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-0 bg-gradient-to-r from-safari-gold to-safari-green transition-all duration-500 group-hover:w-3/4 rounded-full"></div>
-            </article>
-          </div>
-
-          <div v-else-if="isLoadingTourPackages" class="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-12">
-            <div v-for="i in 3" :key="i" class="h-[500px] rounded-2xl bg-white/10 animate-pulse"></div>
-          </div>
-
-          <div class="text-center">
             <router-link
               to="/tour-packages"
               class="group relative overflow-hidden inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-safari-gold via-safari-gold/95 to-orange-500 px-8 sm:px-10 py-4 sm:py-5 text-sm sm:text-base font-bold text-charcoal shadow-lg transition-all duration-300 hover:from-safari-gold-light hover:via-safari-gold hover:to-orange-400 hover:shadow-2xl hover:shadow-safari-gold/40 hover:scale-105"
@@ -1574,7 +1599,10 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
 
             <!-- Right Column: Modern Contact Form -->
             <div class="lg:sticky lg:top-8 lg:h-fit">
-              <form class="space-y-5 sm:space-y-6 rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/8 to-white/5 backdrop-blur-md p-7 sm:p-9 lg:p-10 shadow-2xl transition-all duration-300 hover:border-safari-gold/30 hover:shadow-safari-gold/10">
+              <form 
+                @submit.prevent="handleContactSubmit"
+                class="space-y-5 sm:space-y-6 rounded-2xl sm:rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/8 to-white/5 backdrop-blur-md p-7 sm:p-9 lg:p-10 shadow-2xl transition-all duration-300 hover:border-safari-gold/30 hover:shadow-safari-gold/10"
+              >
                 <div class="mb-6 pb-6 border-b border-white/10">
                   <h3 class="text-2xl sm:text-3xl font-heading font-bold text-white mb-2">Get in Touch</h3>
                   <p class="text-sm sm:text-base text-white/70">Fill out the form below and we'll get back to you within 24 hours.</p>
@@ -1587,8 +1615,10 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                     </label>
                     <input
                       id="fullname"
+                      v-model="contactForm.name"
                       type="text"
                       placeholder="Your full name"
+                      required
                       class="w-full rounded-xl sm:rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-4 sm:px-5 py-3 sm:py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50 hover:border-white/40"
                     />
                   </div>
@@ -1598,8 +1628,10 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                     </label>
                     <input
                       id="email"
+                      v-model="contactForm.email"
                       type="email"
                       placeholder="you@example.com"
+                      required
                       class="w-full rounded-xl sm:rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-4 sm:px-5 py-3 sm:py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50 hover:border-white/40"
                     />
                   </div>
@@ -1612,6 +1644,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                     </label>
                     <input
                       id="phone"
+                      v-model="contactForm.phone"
                       type="tel"
                       placeholder="+255..."
                       class="w-full rounded-xl sm:rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-4 sm:px-5 py-3 sm:py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50 hover:border-white/40"
@@ -1653,15 +1686,24 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
                   </label>
                   <textarea
                     id="message"
+                    v-model="contactForm.message"
                     rows="5"
                     placeholder="Preferred travel dates, bucket-list sightings, special celebrations..."
+                    required
                     class="w-full rounded-xl sm:rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm px-4 sm:px-5 py-3 sm:py-3.5 text-white placeholder:text-white/50 transition-all duration-300 focus:border-safari-gold focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-safari-gold/50 hover:border-white/40 resize-none"
                   ></textarea>
                 </div>
 
+                <div v-if="contactFormError" class="mt-4 rounded-xl bg-red-500/20 border border-red-500/50 px-4 py-3 text-sm text-red-200">
+                  {{ contactFormError }}
+                </div>
+                <div v-if="contactFormSuccess" class="mt-4 rounded-xl bg-green-500/20 border border-green-500/50 px-4 py-3 text-sm text-green-200">
+                  Thank you! Your message has been sent. We'll get back to you within 24 hours.
+                </div>
                 <button
                   type="submit"
-                  class="group relative mt-6 sm:mt-8 w-full overflow-hidden rounded-full bg-gradient-to-r from-safari-gold via-safari-gold/95 to-orange-500 px-8 py-4 text-sm font-bold text-charcoal shadow-lg transition-all duration-300 hover:from-safari-gold-light hover:via-safari-gold hover:to-orange-400 hover:shadow-2xl hover:shadow-safari-gold/40 hover:scale-[1.02] active:scale-[0.98]"
+                  :disabled="isSubmittingContact"
+                  class="group relative mt-6 sm:mt-8 w-full overflow-hidden rounded-full bg-gradient-to-r from-safari-gold via-safari-gold/95 to-orange-500 px-8 py-4 text-sm font-bold text-charcoal shadow-lg transition-all duration-300 hover:from-safari-gold-light hover:via-safari-gold hover:to-orange-400 hover:shadow-2xl hover:shadow-safari-gold/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span class="relative z-10 flex items-center justify-center">
                     Submit Inquiry

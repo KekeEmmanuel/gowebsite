@@ -3,19 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\TourPackage;
+use App\Models\SafariPackage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class TourPackageController extends Controller
+class SafariPackageController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('Admin/TourPackages/Index', [
-            'packages' => TourPackage::orderBy('display_order')
+        return Inertia::render('Admin/SafariPackages/Index', [
+            'packages' => SafariPackage::orderBy('display_order')
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($package) {
@@ -43,14 +43,14 @@ class TourPackageController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Admin/TourPackages/Create');
+        return Inertia::render('Admin/SafariPackages/Create');
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:tour_packages,slug',
+            'slug' => 'nullable|string|max:255|unique:safari_packages,slug',
             'short_description' => 'nullable|string|max:500',
             'description' => 'required|string',
             'price_from' => 'nullable|numeric|min:0',
@@ -72,7 +72,7 @@ class TourPackageController extends Controller
         // Remove file fields from validated data before creating model
         unset($validated['hero_image'], $validated['gallery_images']);
 
-        $package = TourPackage::create($validated);
+        $package = SafariPackage::create($validated);
 
         $uploadErrors = [];
 
@@ -94,13 +94,18 @@ class TourPackageController extends Controller
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $index => $image) {
                 try {
-                    $media = $package->addMedia($image->getRealPath())
+                    $package->addMediaFromRequest("gallery_images.{$index}")
                         ->preservingOriginal()
                         ->toMediaCollection('gallery');
                 } catch (\Exception $e) {
                     \Log::error('Failed to upload gallery image: ' . $e->getMessage(), [
                         'index' => $index,
-                        'trace' => $e->getTraceAsString()
+                        'trace' => $e->getTraceAsString(),
+                        'file_details' => [
+                            'name' => $image->getClientOriginalName(),
+                            'size' => $image->getSize(),
+                            'mime' => $image->getMimeType(),
+                        ],
                     ]);
                     $uploadErrors["gallery_images.{$index}"] = "The gallery_images.{$index} failed to upload.";
                 }
@@ -121,20 +126,20 @@ class TourPackageController extends Controller
                 ->withInput();
         }
 
-        return redirect()->route('admin.tour-packages.index')
-            ->with('success', 'Tour package created successfully.');
+        return redirect()->route('admin.safari-packages.index')
+            ->with('success', 'Safari package created successfully.');
     }
 
-    public function edit(TourPackage $tourPackage): Response
+    public function edit(SafariPackage $safariPackage): Response
     {
         // Convert absolute URLs to relative paths
-        $heroImage = $tourPackage->getFirstMediaUrl('hero');
+        $heroImage = $safariPackage->getFirstMediaUrl('hero');
         if ($heroImage && strpos($heroImage, 'http') === 0) {
             $parsed = parse_url($heroImage);
             $heroImage = $parsed['path'] ?? $heroImage;
         }
         
-        $gallery = $tourPackage->getMedia('gallery')->map(function ($media) {
+        $gallery = $safariPackage->getMedia('gallery')->map(function ($media) {
             $url = $media->getUrl();
             // Convert absolute URLs to relative paths
             if ($url && strpos($url, 'http') === 0) {
@@ -147,30 +152,30 @@ class TourPackageController extends Controller
             ];
         });
         
-        return Inertia::render('Admin/TourPackages/Edit', [
+        return Inertia::render('Admin/SafariPackages/Edit', [
             'package' => [
-                'id' => $tourPackage->id,
-                'title' => $tourPackage->title,
-                'slug' => $tourPackage->slug,
-                'short_description' => $tourPackage->short_description,
-                'description' => $tourPackage->description,
-                'price_from' => $tourPackage->price_from,
-                'duration_days' => $tourPackage->duration_days,
-                'max_participants' => $tourPackage->max_participants,
-                'display_order' => $tourPackage->display_order,
-                'is_featured' => $tourPackage->is_featured,
-                'published_at' => $tourPackage->published_at?->toISOString(),
+                'id' => $safariPackage->id,
+                'title' => $safariPackage->title,
+                'slug' => $safariPackage->slug,
+                'short_description' => $safariPackage->short_description,
+                'description' => $safariPackage->description,
+                'price_from' => $safariPackage->price_from,
+                'duration_days' => $safariPackage->duration_days,
+                'max_participants' => $safariPackage->max_participants,
+                'display_order' => $safariPackage->display_order,
+                'is_featured' => $safariPackage->is_featured,
+                'published_at' => $safariPackage->published_at?->toISOString(),
                 'hero_image' => $heroImage ?: null,
                 'gallery' => $gallery,
             ],
         ]);
     }
 
-    public function update(Request $request, TourPackage $tourPackage): RedirectResponse
+    public function update(Request $request, SafariPackage $safariPackage): RedirectResponse
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:tour_packages,slug,' . $tourPackage->id,
+            'slug' => 'required|string|max:255|unique:safari_packages,slug,' . $safariPackage->id,
             'short_description' => 'nullable|string|max:500',
             'description' => 'required|string',
             'price_from' => 'nullable|numeric|min:0',
@@ -187,13 +192,13 @@ class TourPackageController extends Controller
         // Remove file fields from validated data before updating model
         unset($validated['hero_image'], $validated['gallery_images']);
         
-        $tourPackage->update($validated);
+        $safariPackage->update($validated);
 
         // Handle hero image
         if ($request->hasFile('hero_image')) {
             try {
-                $tourPackage->clearMediaCollection('hero');
-                $tourPackage->addMediaFromRequest('hero_image')
+                $safariPackage->clearMediaCollection('hero');
+                $safariPackage->addMediaFromRequest('hero_image')
                     ->preservingOriginal()
                     ->toMediaCollection('hero');
             } catch (\Exception $e) {
@@ -203,9 +208,9 @@ class TourPackageController extends Controller
 
         // Handle gallery images
         if ($request->hasFile('gallery_images')) {
-            foreach ($request->file('gallery_images') as $image) {
+            foreach ($request->file('gallery_images') as $index => $image) {
                 try {
-                    $tourPackage->addMedia($image->getRealPath())
+                    $safariPackage->addMediaFromRequest("gallery_images.{$index}")
                         ->preservingOriginal()
                         ->toMediaCollection('gallery');
                 } catch (\Exception $e) {
@@ -214,17 +219,15 @@ class TourPackageController extends Controller
             }
         }
 
-        return redirect()->route('admin.tour-packages.index')
-            ->with('success', 'Tour package updated successfully.');
+        return redirect()->route('admin.safari-packages.index')
+            ->with('success', 'Safari package updated successfully.');
     }
 
-    public function destroy(TourPackage $tourPackage): RedirectResponse
+    public function destroy(SafariPackage $safariPackage): RedirectResponse
     {
-        $tourPackage->delete();
+        $safariPackage->delete();
 
-        return redirect()->route('admin.tour-packages.index')
-            ->with('success', 'Tour package deleted successfully.');
+        return redirect()->route('admin.safari-packages.index')
+            ->with('success', 'Safari package deleted successfully.');
     }
 }
-
-
