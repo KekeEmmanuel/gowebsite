@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AboutHighlightController;
 use App\Http\Controllers\Admin\AboutStatController;
 use App\Http\Controllers\Admin\ContactChannelController;
+use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\ContactQuickFactController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DestinationController;
@@ -48,6 +49,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->group(function (): voi
     Route::resource('lodges', LodgeController::class)->names('admin.lodges');
     Route::resource('contact-channels', ContactChannelController::class)->names('admin.contact-channels');
     Route::resource('contact-quick-facts', ContactQuickFactController::class)->names('admin.contact-quick-facts');
+    Route::resource('contact-messages', ContactMessageController::class)->names('admin.contact-messages')->except(['create', 'store', 'edit']);
     Route::resource('tour-packages', \App\Http\Controllers\Admin\TourPackageController::class)->names('admin.tour-packages');
     Route::resource('bookings', \App\Http\Controllers\Admin\BookingController::class)->names('admin.bookings');
     Route::post('bookings/{booking}/complete', [\App\Http\Controllers\Admin\BookingController::class, 'markCompleted'])->name('admin.bookings.complete');
