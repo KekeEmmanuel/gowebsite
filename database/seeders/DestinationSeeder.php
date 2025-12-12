@@ -108,7 +108,27 @@ class DestinationSeeder extends Seeder
         }
 
         $imageData = file_get_contents($filePath);
-        $mimeType = mime_content_type($filePath);
+        
+        // Try to detect MIME type - use finfo if available, otherwise use file extension
+        $mimeType = 'image/jpeg'; // default
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $filePath);
+            finfo_close($finfo);
+        } elseif (function_exists('mime_content_type')) {
+            $mimeType = mime_content_type($filePath);
+        } else {
+            // Fallback to extension-based detection
+            $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+            $mimeTypes = [
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+                'webp' => 'image/webp',
+            ];
+            $mimeType = $mimeTypes[$extension] ?? 'image/jpeg';
+        }
         
         return 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
     }

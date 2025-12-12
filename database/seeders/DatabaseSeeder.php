@@ -25,6 +25,8 @@ class DatabaseSeeder extends Seeder
             AboutHighlightSeeder::class,
             TourPackageSeeder::class,
             BookingSeeder::class,
+            ContactChannelSeeder::class,
+            ContactQuickFactSeeder::class,
         ]);
     }
 }
