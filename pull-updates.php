@@ -101,13 +101,13 @@ runCommand(
 // Copy updated files to Laravel directory
 logOutput("Copying updated files to Laravel directory...");
 $filesToCopy = [
-    'routes/web.php',  // Include routes file
     'database/seeders/DestinationSeeder.php',
     'database/seeders/ItinerarySeeder.php',
     'database/seeders/LodgeSeeder.php',
     'database/seeders/ContactChannelSeeder.php',
     'database/seeders/ContactQuickFactSeeder.php',
     'database/seeders/DatabaseSeeder.php',
+    'routes/web.php',
 ];
 
 foreach ($filesToCopy as $file) {
@@ -127,6 +127,36 @@ foreach ($filesToCopy as $file) {
         }
     } else {
         logError("Source file not found: $sourceFile");
+    }
+}
+
+// Clear route cache after copying routes file
+if (in_array('routes/web.php', $filesToCopy)) {
+    logOutput("Clearing route cache...");
+    $phpPath = '';
+    $phpPaths = [
+        '/opt/cpanel/ea-php82/root/usr/bin/php',
+        '/opt/cpanel/ea-php83/root/usr/bin/php',
+        '/usr/local/bin/php',
+        '/usr/bin/php',
+        'php',
+    ];
+    foreach ($phpPaths as $path) {
+        if ($path === 'php' || file_exists($path)) {
+            $phpPath = $path;
+            break;
+        }
+    }
+    
+    $command = "cd $laravelPath && $phpPath artisan route:clear 2>&1";
+    $output = [];
+    $returnVar = 0;
+    exec($command, $output, $returnVar);
+    
+    if ($returnVar === 0) {
+        logOutput("Route cache cleared successfully");
+    } else {
+        logError("Failed to clear route cache");
     }
 }
 
