@@ -1,0 +1,40 @@
+═══════════════════════════════════════════════════════════════
+  QUICK UPLOAD INSTRUCTIONS - Do This Now!
+═══════════════════════════════════════════════════════════════
+
+FILE TO UPLOAD:
+  → backend/public/.user.ini
+
+UPLOAD TO:
+  → /home/gotzsafari/public_html/.user.ini
+
+STEPS:
+  1. Log into cPanel: https://www.gotzsafari.com/cpanel
+  2. Click "File Manager"
+  3. Navigate to: public_html
+  4. Click "Upload" button (top menu)
+  5. Select file: backend/public/.user.ini
+  6. Wait for upload to complete
+  7. Wait 2-3 minutes for cPanel to process
+  8. Refresh: https://www.gotzsafari.com/check-upload-limits.php
+  9. All values should show "✓ OK"
+
+═══════════════════════════════════════════════════════════════
+
+ALTERNATIVE: Configure in cPanel Interface
+
+  1. Log into cPanel
+  2. Find "Select PHP Version" or "MultiPHP INI Editor"
+  3. Select PHP 8.2
+  4. Click "Options" or "Editor"
+  5. Set these values:
+     upload_max_filesize = 50M
+     post_max_size = 60M
+     max_execution_time = 300
+     max_input_time = 300
+     memory_limit = 256M
+  6. Click "Save"
+  7. Refresh diagnostic page
+
+═══════════════════════════════════════════════════════════════
+

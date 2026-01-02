@@ -1,0 +1,64 @@
+═══════════════════════════════════════════════════════════════
+  QUICK STEPS: Configure PHP Upload Limits in cPanel
+═══════════════════════════════════════════════════════════════
+
+STEP 1: Log into cPanel
+  → Go to: https://www.gotzsafari.com/cpanel
+  → Enter username and password
+
+STEP 2: Find PHP Settings
+  → Look for: "Select PHP Version" or "MultiPHP INI Editor"
+  → Click on it
+
+STEP 3: Select PHP 8.2
+  → Make sure PHP 8.2 is selected
+  → Click "Set as current" if needed
+
+STEP 4: Open Options/Editor
+  → Click "Options" or "Editor" button
+  → This opens PHP configuration
+
+STEP 5: Update These 5 Settings
+  ┌─────────────────────────┬─────────┐
+  │ Setting                 │ Value   │
+  ├─────────────────────────┼─────────┤
+  │ upload_max_filesize     │ 50M     │
+  │ post_max_size           │ 60M     │
+  │ max_execution_time      │ 300     │
+  │ max_input_time          │ 300     │
+  │ memory_limit            │ 256M    │
+  └─────────────────────────┴─────────┘
+
+STEP 6: Save Changes
+  → Click "Save" or "Save Changes"
+  → Wait for success message
+
+STEP 7: Test
+  → Upload check-upload-limits.php to public_html
+  → Visit: https://www.gotzsafari.com/check-upload-limits.php
+  → Verify all values show "✓ OK"
+  → DELETE the test file after checking
+
+═══════════════════════════════════════════════════════════════
+  TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+Can't find PHP settings?
+  → Look in "Software" section
+  → Check "Advanced" section
+  → Contact hosting provider
+
+Settings don't save?
+  → Make sure you have permissions
+  → Try .user.ini file method instead
+  → Contact hosting support
+
+Settings saved but not working?
+  → Wait 2-3 minutes
+  → Clear browser cache
+  → Restart PHP (switch versions and back)
+
+═══════════════════════════════════════════════════════════════
+
+For detailed instructions, see: CPANEL_PHP_CONFIG.md
+

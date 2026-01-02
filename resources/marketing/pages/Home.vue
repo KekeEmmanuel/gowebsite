@@ -20,15 +20,20 @@ type HeroSlide = {
   ctaHref: string;
 };
 
-const heroSlides = ref<HeroSlide[]>([]);
-const isLoading = ref(true);
+// Initialize with default images immediately (no loading state)
+const heroSlides = ref<HeroSlide[]>([...DEFAULT_HERO_SLIDES]);
 const showNavbar = ref(true);
 const lastScrollY = ref(0);
 const showBackToTop = ref(false);
 
-// Fetch hero slides and feature cards from API
+// Fetch hero slides and feature cards from API (background update)
 onMounted(async () => {
-  // Fetch hero slides with timeout and fallback
+  // Start auto-slide immediately with default images
+  if (heroSlides.value.length > 0) {
+    startAutoSlide();
+  }
+
+  // Fetch hero slides with timeout and fallback (updates in background)
   try {
     const response = await fetchWithTimeout('/api/hero-slides', {}, 8000);
     if (!response.ok) {
@@ -41,26 +46,21 @@ onMounted(async () => {
     
     if (slides.length > 0) {
       heroSlides.value = slides.map((slide: any) => ({
-        image: slide.image || '/images/safari/wildlife-savannah.jpg',
+        image: slide.image || '/images/safari/hero-1.jpg',
         label: slide.label || '',
         title: slide.title || '',
         description: slide.description || '',
         ctaLabel: slide.ctaLabel || 'Learn More',
         ctaHref: slide.ctaHref || '#',
       }));
-    } else {
-      console.warn('No hero slides found in API response, using defaults');
-      heroSlides.value = [...DEFAULT_HERO_SLIDES];
+      // Restart auto-slide with new slides
+      if (heroSlides.value.length > 0) {
+        restartAutoSlide();
+      }
     }
   } catch (error) {
     console.error('Error fetching hero slides (network/timeout/error):', error);
-    // Always use defaults on any error
-    heroSlides.value = [...DEFAULT_HERO_SLIDES];
-  } finally {
-    isLoading.value = false;
-    if (heroSlides.value.length > 0) {
-      startAutoSlide();
-    }
+    // Keep using defaults - already set initially
   }
 
   // Fetch feature cards with timeout and fallback
@@ -223,7 +223,7 @@ onMounted(async () => {
         name: destination.name || '',
         tag: destination.tag || destination.teaser || '',
         description: destination.description || destination.teaser || '',
-        image: destination.image || '/images/safari/wildlife-savannah.jpg',
+        image: destination.image || '/images/safari/wildlife-herd.jpg',
       }));
       console.log('Mapped destinationSpots:', destinationSpots.value);
     } else {
@@ -418,7 +418,7 @@ const currentSlide = ref(0);
 const activeSlide = computed<HeroSlide>(() => {
   if (heroSlides.value.length === 0) {
     return {
-      image: '/images/safari/wildlife-savannah.jpg',
+      image: '/images/safari/hero-1.jpg',
       label: '',
       title: '',
       description: '',
@@ -853,14 +853,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
     <main class="pt-0 m-0">
       <section id="home" class="relative m-0">
         <div class="relative h-screen min-h-[600px] m-0">
-          <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-gray-900">
-            <div class="text-center text-white">
-              <div class="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
-              <p class="text-sm">Loading...</p>
-            </div>
-          </div>
           <div
-            v-else
             v-for="(slide, index) in heroSlides"
             :key="slide.image + index"
             class="absolute inset-0 transition-opacity duration-700"
@@ -872,7 +865,7 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
               :src="slide.image"
               :alt="slide.title"
               class="h-full w-full object-cover"
-              loading="lazy"
+              loading="eager"
             />
             <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/55 to-black/25"></div>
           </div>
@@ -905,9 +898,9 @@ const getFeatureIcon = (key: keyof typeof featureIcons) => featureIcons[key];
             </div>
           </div>
 
-          <div v-if="!isLoading && heroSlides.length > 0" class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
+          <div v-if="heroSlides.length > 0" class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
 
-          <div v-if="!isLoading && heroSlides.length > 0" class="absolute inset-x-0 bottom-10 z-20 flex items-center justify-between px-6">
+          <div v-if="heroSlides.length > 0" class="absolute inset-x-0 bottom-10 z-20 flex items-center justify-between px-6">
             <div class="flex gap-4">
               <button
                 type="button"

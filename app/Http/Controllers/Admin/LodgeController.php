@@ -67,9 +67,9 @@ class LodgeController extends Controller
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'published_at' => 'nullable|date',
-            'hero_image' => 'nullable|image|max:10240',
+            'hero_image' => 'nullable|image|max:51200',
             'gallery_images' => 'nullable|array',
-            'gallery_images.*' => 'image|max:10240',
+            'gallery_images.*' => 'image|max:51200',
         ]);
 
         // Remove image files from validated data before creating the lodge
@@ -177,9 +177,9 @@ class LodgeController extends Controller
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'published_at' => 'nullable|date',
-            'hero_image' => 'nullable|image|max:10240',
+            'hero_image' => 'nullable|image|max:51200',
             'gallery_images' => 'nullable|array',
-            'gallery_images.*' => 'image|max:10240',
+            'gallery_images.*' => 'image|max:51200',
         ]);
 
         // Remove image files from validated data before updating the lodge

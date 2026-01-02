@@ -1,5 +1,8 @@
-# Force PHP 8.2
-AddHandler application/x-httpd-ea-php82 .php
+# Force PHP 8.1
+AddHandler application/x-httpd-ea-php81 .php
+
+# Note: PHP upload limits are configured via .user.ini file
+# php_value directives are disabled on this host for security
 
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>

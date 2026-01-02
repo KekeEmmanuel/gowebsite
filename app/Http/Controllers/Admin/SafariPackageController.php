@@ -59,9 +59,9 @@ class SafariPackageController extends Controller
             'display_order' => 'nullable|integer|min:0',
             'is_featured' => 'boolean',
             'published_at' => 'nullable|date',
-            'hero_image' => 'nullable|image|max:10240',
+            'hero_image' => 'nullable|image|max:51200',
             'gallery_images' => 'nullable|array',
-            'gallery_images.*' => 'image|max:10240',
+            'gallery_images.*' => 'image|max:51200',
         ]);
 
         // Generate slug if not provided
@@ -184,9 +184,9 @@ class SafariPackageController extends Controller
             'display_order' => 'nullable|integer|min:0',
             'is_featured' => 'boolean',
             'published_at' => 'nullable|date',
-            'hero_image' => 'nullable|image|max:10240',
+            'hero_image' => 'nullable|image|max:51200',
             'gallery_images' => 'nullable|array',
-            'gallery_images.*' => 'image|max:10240',
+            'gallery_images.*' => 'image|max:51200',
         ]);
 
         // Remove file fields from validated data before updating model

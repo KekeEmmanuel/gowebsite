@@ -19,11 +19,24 @@ class TourPackageController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($package) {
-                    $heroImage = $package->getFirstMediaUrl('hero');
-                    // Convert absolute URLs to relative paths
-                    if ($heroImage && strpos($heroImage, 'http') === 0) {
-                        $parsed = parse_url($heroImage);
-                        $heroImage = $parsed['path'] ?? $heroImage;
+                    $heroImage = null;
+                    try {
+                        // Check if package has media before trying to access it
+                        if ($package->hasMedia('hero')) {
+                            $heroImage = $package->getFirstMediaUrl('hero');
+                            // Convert absolute URLs to relative paths
+                            if ($heroImage && strpos($heroImage, 'http') === 0) {
+                                $parsed = parse_url($heroImage);
+                                $heroImage = $parsed['path'] ?? $heroImage;
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // Log error but don't break the page
+                        \Log::warning('Failed to get hero image for tour package: ' . $e->getMessage(), [
+                            'package_id' => $package->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        $heroImage = null;
                     }
                     return [
                         'id' => $package->id,
@@ -59,9 +72,9 @@ class TourPackageController extends Controller
             'display_order' => 'nullable|integer|min:0',
             'is_featured' => 'boolean',
             'published_at' => 'nullable|date',
-            'hero_image' => 'nullable|image|max:10240',
+            'hero_image' => 'nullable|image|max:51200',
             'gallery_images' => 'nullable|array',
-            'gallery_images.*' => 'image|max:10240',
+            'gallery_images.*' => 'image|max:51200',
         ]);
 
         // Generate slug if not provided
@@ -128,24 +141,44 @@ class TourPackageController extends Controller
     public function edit(TourPackage $tourPackage): Response
     {
         // Convert absolute URLs to relative paths
-        $heroImage = $tourPackage->getFirstMediaUrl('hero');
-        if ($heroImage && strpos($heroImage, 'http') === 0) {
-            $parsed = parse_url($heroImage);
-            $heroImage = $parsed['path'] ?? $heroImage;
+        $heroImage = null;
+        try {
+            if ($tourPackage->hasMedia('hero')) {
+                $heroImage = $tourPackage->getFirstMediaUrl('hero');
+                if ($heroImage && strpos($heroImage, 'http') === 0) {
+                    $parsed = parse_url($heroImage);
+                    $heroImage = $parsed['path'] ?? $heroImage;
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Failed to get hero image for tour package: ' . $e->getMessage(), [
+                'package_id' => $tourPackage->id,
+            ]);
+            $heroImage = null;
         }
         
-        $gallery = $tourPackage->getMedia('gallery')->map(function ($media) {
-            $url = $media->getUrl();
-            // Convert absolute URLs to relative paths
-            if ($url && strpos($url, 'http') === 0) {
-                $parsed = parse_url($url);
-                $url = $parsed['path'] ?? $url;
+        $gallery = [];
+        try {
+            if ($tourPackage->hasMedia('gallery')) {
+                $gallery = $tourPackage->getMedia('gallery')->map(function ($media) {
+                $url = $media->getUrl();
+                // Convert absolute URLs to relative paths
+                if ($url && strpos($url, 'http') === 0) {
+                    $parsed = parse_url($url);
+                    $url = $parsed['path'] ?? $url;
+                }
+                    return [
+                        'id' => $media->id,
+                        'url' => $url,
+                    ];
+                })->toArray();
             }
-            return [
-                'id' => $media->id,
-                'url' => $url,
-            ];
-        });
+        } catch (\Exception $e) {
+            \Log::warning('Failed to get gallery images for tour package: ' . $e->getMessage(), [
+                'package_id' => $tourPackage->id,
+            ]);
+            $gallery = [];
+        }
         
         return Inertia::render('Admin/TourPackages/Edit', [
             'package' => [
@@ -179,9 +212,9 @@ class TourPackageController extends Controller
             'display_order' => 'nullable|integer|min:0',
             'is_featured' => 'boolean',
             'published_at' => 'nullable|date',
-            'hero_image' => 'nullable|image|max:10240',
+            'hero_image' => 'nullable|image|max:51200',
             'gallery_images' => 'nullable|array',
-            'gallery_images.*' => 'image|max:10240',
+            'gallery_images.*' => 'image|max:51200',
         ]);
 
         // Remove file fields from validated data before updating model

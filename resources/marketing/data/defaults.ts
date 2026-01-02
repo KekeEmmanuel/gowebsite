@@ -8,7 +8,7 @@ export const DEFAULT_DESTINATIONS = [
     name: 'Serengeti National Park',
     tag: 'Great Migration',
     description: 'River-crossing drama, predator action, endless horizons under technicolour sunsets.',
-    image: '/images/safari/wildlife-savannah.jpg',
+    image: '/images/safari/wildlife-herd.jpg',
   },
   {
     name: 'Ngorongoro Crater',
@@ -41,7 +41,7 @@ export const DEFAULT_ITINERARIES = [
     title: 'Great Migration Serengeti Safari',
     summary: 'Follow the famed wildebeest march with private 4x4 game drives, exclusive viewing decks, and optional sunrise balloon flights.',
     meta: '7 days · Serengeti & Grumeti',
-    image: '/images/safari/wildlife-savannah.jpg',
+    image: '/images/safari/wildlife-herd.jpg',
     badge: 'Signature Collection',
     highlights: [
       'Luxury tented camps positioned on migration corridors',
@@ -128,7 +128,7 @@ export const DEFAULT_FEATURE_CARDS = [
 
 export const DEFAULT_HERO_SLIDES = [
   {
-    image: '/images/safari/wildlife-savannah.jpg',
+    image: '/images/safari/hero-1.jpg',
     label: 'Welcome to Tanzania',
     title: 'Discover the beauty of Tanzania',
     description: 'Experience unforgettable safaris and adventures.',
