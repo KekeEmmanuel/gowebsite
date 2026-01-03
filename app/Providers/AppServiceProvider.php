@@ -19,6 +19,12 @@ class AppServiceProvider extends ServiceProvider
     {
         // mime_content_type polyfill is loaded in bootstrap/mime-polyfill.php
         // which is included early in public/index.php
+        
+        // Disable image optimizers completely when fileinfo is not available
+        // This must be in register() to run before Conversion class is instantiated
+        if (!extension_loaded('fileinfo')) {
+            config(['media-library.image_optimizers' => []]);
+        }
     }
 
     /**
@@ -69,10 +75,6 @@ class AppServiceProvider extends ServiceProvider
                     $config
                 );
             });
-            
-            // Disable image optimizers completely when fileinfo is not available
-            // This prevents the mime_content_type() error in Spatie Image Optimizer
-            config(['media-library.image_optimizers' => []]);
         }
     }
 }
