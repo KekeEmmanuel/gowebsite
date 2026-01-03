@@ -14,6 +14,8 @@ $filesToCopy = [
     'app/Models/Lodge.php',
     'bootstrap/mime-polyfill.php',
     'app/Providers/AppServiceProvider.php',
+    'app/Providers/MediaLibraryServiceProvider.php',
+    'bootstrap/providers.php',
 ];
 
 ?>
