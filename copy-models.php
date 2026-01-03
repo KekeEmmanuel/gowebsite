@@ -8,6 +8,16 @@ $homeDir = '/home/gotzsafari';
 $repoPath = $homeDir . '/repositories/gowebsitelaravel';
 $laravelPath = $homeDir . '/laravel';
 
+// First, pull latest changes from Git
+echo "<div class='info'><strong>Step 0:</strong> Pulling latest changes from Git</div>";
+chdir($repoPath);
+exec("git pull origin main 2>&1", $gitOutput, $gitReturn);
+if ($gitReturn === 0) {
+    echo "<div class='success'>✓ Pulled latest changes</div>";
+} else {
+    echo "<div class='error'>⚠ Git pull had issues, but continuing...</div>";
+}
+
 $filesToCopy = [
     'app/Models/TourPackage.php',
     'app/Models/SafariPackage.php',
@@ -16,6 +26,7 @@ $filesToCopy = [
     'app/Providers/AppServiceProvider.php',
     'app/Providers/MediaLibraryServiceProvider.php',
     'bootstrap/providers.php',
+    'artisan',
 ];
 
 ?>
@@ -57,15 +68,16 @@ foreach ($filesToCopy as $file) {
     }
 }
 
-// Clear config cache
+// Clear all caches
 $phpPath = '/opt/cpanel/ea-php82/root/usr/bin/php';
 if (file_exists($phpPath)) {
-    echo "<div class='success'>🔄 Clearing config cache...</div>";
-    exec("$phpPath $laravelPath/artisan config:clear 2>&1", $output, $return);
-    if ($return === 0) {
-        echo "<div class='success'>✓ Config cache cleared</div>";
-    } else {
-        echo "<div class='error'>❌ Failed to clear cache</div>";
+    echo "<div class='info'><strong>Step 4:</strong> Clearing all caches</div>";
+    $cacheCommands = ['config:clear', 'cache:clear', 'route:clear', 'view:clear', 'optimize:clear'];
+    foreach ($cacheCommands as $cmd) {
+        exec("$phpPath $laravelPath/artisan $cmd 2>&1", $output, $return);
+        if ($return === 0) {
+            echo "<div class='success'>✓ Cleared: $cmd</div>";
+        }
     }
 }
 
