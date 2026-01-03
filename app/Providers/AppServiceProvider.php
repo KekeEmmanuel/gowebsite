@@ -17,14 +17,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // mime_content_type polyfill is loaded in bootstrap/mime-polyfill.php
-        // which is included early in public/index.php
-        
-        // Ensure namespace function exists (in case polyfill wasn't loaded early enough)
-        if (!extension_loaded('fileinfo') && !function_exists('Spatie\ImageOptimizer\mime_content_type')) {
-            eval('
-                namespace Spatie\ImageOptimizer {
-                    if (!function_exists("mime_content_type")) {
+        // CRITICAL: Define namespace function FIRST, before any vendor code runs
+        if (!extension_loaded('fileinfo')) {
+            // Define the namespace function immediately using eval
+            // This must happen before ANY Spatie\ImageOptimizer code is loaded
+            if (!function_exists('Spatie\ImageOptimizer\mime_content_type')) {
+                eval('
+                    namespace Spatie\ImageOptimizer {
                         function mime_content_type($filename) {
                             if (!file_exists($filename)) {
                                 return false;
@@ -39,13 +38,19 @@ class AppServiceProvider extends ServiceProvider
                             return $mimeTypes[$extension] ?? "application/octet-stream";
                         }
                     }
-                }
-            ');
-        }
-        
-        // Disable image optimizers completely when fileinfo is not available
-        // This must be in register() to run before Conversion class is instantiated
-        if (!extension_loaded('fileinfo')) {
+                ');
+            }
+            
+            // Also define global function if not exists
+            if (!function_exists('mime_content_type')) {
+                eval('
+                    function mime_content_type($filename) {
+                        return \\Spatie\\ImageOptimizer\\mime_content_type($filename);
+                    }
+                ');
+            }
+            
+            // Disable image optimizers completely
             config(['media-library.image_optimizers' => []]);
         }
     }
