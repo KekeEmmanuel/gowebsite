@@ -8,15 +8,39 @@ class ImageOptimizerServiceProvider extends ServiceProvider
 {
     /**
      * Register services.
+     * 
+     * This provider ensures mime_content_type() exists in the Spatie\ImageOptimizer namespace
+     * when the fileinfo extension is not available.
      */
     public function register(): void
     {
-        // Patch Spatie\ImageOptimizer\Image class to use polyfill
+        // Ensure the namespace function exists before any Image class is instantiated
         if (!extension_loaded('fileinfo')) {
-            // Define mime_content_type in Spatie\ImageOptimizer namespace if not exists
-            if (!function_exists('Spatie\ImageOptimizer\mime_content_type')) {
-                eval('
-                    namespace Spatie\ImageOptimizer {
+            $this->defineNamespaceFunction();
+        }
+    }
+
+    /**
+     * Define mime_content_type() in Spatie\ImageOptimizer namespace
+     */
+    protected function defineNamespaceFunction(): void
+    {
+        // Check if function already exists by trying to call it
+        $functionExists = false;
+        try {
+            if (function_exists('Spatie\ImageOptimizer\mime_content_type')) {
+                $functionExists = true;
+            }
+        } catch (\Throwable $e) {
+            // Function doesn't exist, continue
+        }
+        
+        if (!$functionExists) {
+            // Define the function in the namespace using eval
+            // This must be done before any Image class is instantiated
+            eval('
+                namespace Spatie\ImageOptimizer {
+                    if (!function_exists("mime_content_type")) {
                         function mime_content_type($filename) {
                             if (!file_exists($filename)) {
                                 return false;
@@ -41,8 +65,8 @@ class ImageOptimizerServiceProvider extends ServiceProvider
                             return $mimeTypes[$extension] ?? "application/octet-stream";
                         }
                     }
-                ');
-            }
+                }
+            ');
         }
     }
 

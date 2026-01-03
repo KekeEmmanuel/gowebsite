@@ -73,10 +73,14 @@ if (!function_exists('mime_content_type') && !extension_loaded('fileinfo')) {
 }
 
 // Define in Spatie\ImageOptimizer namespace using eval to avoid namespace declaration issues
-if (!function_exists('Spatie\ImageOptimizer\mime_content_type') && !extension_loaded('fileinfo')) {
+// Always define if fileinfo is not loaded (no checks needed - just define it)
+if (!extension_loaded('fileinfo')) {
+    // Use eval to define function in the namespace
+    // This must be done before any Image class tries to use it
     eval('
         namespace Spatie\ImageOptimizer {
             function mime_content_type($filename) {
+                // Call the global function (which we defined above)
                 return \\mime_content_type($filename);
             }
         }
