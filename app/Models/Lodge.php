@@ -61,17 +61,28 @@ class Lodge extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        $this
+        // Disable optimization if fileinfo is not available to prevent mime_content_type() errors
+        $conversion = $this
             ->addMediaConversion('thumb')
             ->width(480)
-            ->height(320)
-            ->performOnCollections('hero', 'gallery');
+            ->height(320);
+        
+        if (!extension_loaded('fileinfo')) {
+            $conversion->nonOptimized();
+        }
+        
+        $conversion->performOnCollections('hero', 'gallery');
 
-        $this
+        $conversion = $this
             ->addMediaConversion('cover')
             ->width(1280)
-            ->height(720)
-            ->performOnCollections('hero', 'gallery');
+            ->height(720);
+        
+        if (!extension_loaded('fileinfo')) {
+            $conversion->nonOptimized();
+        }
+        
+        $conversion->performOnCollections('hero', 'gallery');
     }
 
     public function scopeFeatured(Builder $query): Builder

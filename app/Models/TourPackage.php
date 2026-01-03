@@ -83,12 +83,14 @@ class TourPackage extends Model implements HasMedia
             ->addMediaConversion('thumb')
             ->width(480)
             ->height(320)
+            ->nonOptimized() // Disable optimization to avoid mime_content_type() errors
             ->performOnCollections('hero', 'gallery');
 
         $this
             ->addMediaConversion('cover')
             ->width(1280)
             ->height(720)
+            ->nonOptimized() // Disable optimization to avoid mime_content_type() errors
             ->performOnCollections('hero', 'gallery');
     }
 }
