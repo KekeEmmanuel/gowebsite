@@ -72,11 +72,13 @@ if (!function_exists('mime_content_type') && !extension_loaded('fileinfo')) {
     }
 }
 
-// Define in Spatie\ImageOptimizer namespace to handle namespace calls
-namespace Spatie\ImageOptimizer {
-    if (!function_exists('Spatie\ImageOptimizer\mime_content_type') && !extension_loaded('fileinfo')) {
-        function mime_content_type($filename) {
-            return \mime_content_type($filename);
+// Define in Spatie\ImageOptimizer namespace using eval to avoid namespace declaration issues
+if (!function_exists('Spatie\ImageOptimizer\mime_content_type') && !extension_loaded('fileinfo')) {
+    eval('
+        namespace Spatie\ImageOptimizer {
+            function mime_content_type($filename) {
+                return \\mime_content_type($filename);
+            }
         }
-    }
+    ');
 }
