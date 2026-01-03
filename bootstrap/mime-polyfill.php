@@ -6,6 +6,7 @@
  */
 
 if (!function_exists('mime_content_type') && !extension_loaded('fileinfo')) {
+    // Define in global namespace
     function mime_content_type($filename) {
         if (!file_exists($filename)) {
             return false;
@@ -71,3 +72,11 @@ if (!function_exists('mime_content_type') && !extension_loaded('fileinfo')) {
     }
 }
 
+// Define in Spatie\ImageOptimizer namespace to handle namespace calls
+namespace Spatie\ImageOptimizer {
+    if (!function_exists('Spatie\ImageOptimizer\mime_content_type') && !extension_loaded('fileinfo')) {
+        function mime_content_type($filename) {
+            return \mime_content_type($filename);
+        }
+    }
+}
