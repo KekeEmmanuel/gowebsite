@@ -73,24 +73,18 @@ class TourPackage extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        // Only register conversions if fileinfo is available
-        // Without fileinfo, conversions will fail during optimization
-        if (!extension_loaded('fileinfo')) {
-            return;
-        }
-        
+        // Register conversions like Destination/Itinerary models
+        // The polyfill in bootstrap/mime-polyfill.php handles mime_content_type()
         $this
             ->addMediaConversion('thumb')
             ->width(480)
             ->height(320)
-            ->nonOptimized() // Disable optimization to avoid mime_content_type() errors
             ->performOnCollections('hero', 'gallery');
 
         $this
             ->addMediaConversion('cover')
             ->width(1280)
             ->height(720)
-            ->nonOptimized() // Disable optimization to avoid mime_content_type() errors
             ->performOnCollections('hero', 'gallery');
     }
 }
