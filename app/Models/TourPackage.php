@@ -73,27 +73,22 @@ class TourPackage extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        // Disable optimization if fileinfo extension is not available
-        $withoutOptimization = !extension_loaded('fileinfo');
+        // Only register conversions if fileinfo is available
+        // Without fileinfo, conversions will fail during optimization
+        if (!extension_loaded('fileinfo')) {
+            return;
+        }
         
-        $thumbConversion = $this
+        $this
             ->addMediaConversion('thumb')
             ->width(480)
             ->height(320)
             ->performOnCollections('hero', 'gallery');
-            
-        if ($withoutOptimization) {
-            $thumbConversion->withoutOptimization();
-        }
 
-        $coverConversion = $this
+        $this
             ->addMediaConversion('cover')
             ->width(1280)
             ->height(720)
             ->performOnCollections('hero', 'gallery');
-            
-        if ($withoutOptimization) {
-            $coverConversion->withoutOptimization();
-        }
     }
 }
