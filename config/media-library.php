@@ -119,8 +119,11 @@ return [
      * The media library will try to optimize all converted images by removing
      * metadata and applying a little bit of compression. These are
      * the optimizers that will be used by default.
+     * 
+     * NOTE: Image optimizers require the fileinfo extension. If fileinfo is not
+     * available, optimizers are disabled to prevent errors.
      */
-    'image_optimizers' => [
+    'image_optimizers' => extension_loaded('fileinfo') ? [
         Spatie\ImageOptimizer\Optimizers\Jpegoptim::class => [
             '-m85', // set maximum quality to 85%
             '--force', // ensure that progressive generation is always done also if a little bigger
@@ -158,7 +161,7 @@ return [
             '-a end-usage=q', // rate control mode set to Constant Quality mode.
             '-a tune=ssim', // SSIM as tune the encoder for distortion metric.
         ],
-    ],
+    ] : [], // Disable optimizers if fileinfo is not available
 
     /*
      * These generators will be used to create an image of media files.

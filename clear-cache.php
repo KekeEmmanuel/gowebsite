@@ -1,50 +1,17 @@
 <?php
 /**
  * Clear Laravel Caches
- * Run this script via browser: https://www.gotzsafari.com/clear-cache.php
+ * 
+ * Upload this file to public_html and run it via browser:
+ * https://www.gotzsafari.com/clear-cache.php
+ * 
  * IMPORTANT: Delete this file after use!
  */
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-set_time_limit(120);
 
 $laravelPath = '/home/gotzsafari/laravel';
-
-function logOutput($message) {
-    echo "<p style='color: green;'>✓ $message</p>";
-    flush();
-}
-
-function logError($message) {
-    echo "<p style='color: red;'>✗ $message</p>";
-    flush();
-}
-
-function runCommand($command, $description) {
-    global $laravelPath;
-    logOutput("$description...");
-    $fullCommand = "cd $laravelPath && $command";
-    $output = [];
-    $returnVar = 0;
-    exec($fullCommand . ' 2>&1', $output, $returnVar);
-    
-    echo "<p>Running: <code style='color: #888;'>" . htmlspecialchars($fullCommand) . "</code></p>";
-    
-    if ($returnVar === 0) {
-        logOutput("$description completed successfully");
-        if (!empty($output)) {
-            echo "<pre style='background: #1a1a1a; padding: 10px; color: #0f0; font-size: 11px; max-height: 200px; overflow-y: auto;'>" . htmlspecialchars(implode("\n", $output)) . "</pre>";
-        }
-        return true;
-    } else {
-        logError("$description failed (exit code: $returnVar)");
-        if (!empty($output)) {
-            echo "<pre style='background: #1a1a1a; padding: 10px; color: #f00; font-size: 11px; max-height: 200px; overflow-y: auto;'>" . htmlspecialchars(implode("\n", $output)) . "</pre>";
-        }
-        return false;
-    }
-}
 
 ?>
 <!DOCTYPE html>
@@ -52,31 +19,47 @@ function runCommand($command, $description) {
 <head>
     <title>Clear Laravel Caches</title>
     <style>
-        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
-        .container { max-width: 900px; margin: 0 auto; }
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #1a1a1a; color: #fff; }
+        .success { color: #4CAF50; padding: 15px; background: #2a2a2a; border-left: 4px solid #4CAF50; margin: 10px 0; }
+        .error { color: #f44336; padding: 15px; background: #2a2a2a; border-left: 4px solid #f44336; margin: 10px 0; }
+        .info { color: #2196F3; padding: 15px; background: #2a2a2a; border-left: 4px solid #2196F3; margin: 10px 0; }
+        pre { background: #1a1a1a; padding: 10px; overflow-x: auto; font-size: 12px; border: 1px solid #444; }
         h1 { color: #4CAF50; }
-        .step { background: #2a2a2a; padding: 15px; margin: 10px 0; border-left: 4px solid #4CAF50; }
-        .error { background: #3a1a1a; border-left-color: #f44336; }
-        pre { background: #1a1a1a; padding: 10px; overflow-x: auto; }
+        code { background: #2a2a2a; padding: 2px 6px; border-radius: 3px; }
     </style>
 </head>
 <body>
-<div class="container">
     <h1>🧹 Clear Laravel Caches</h1>
-    <p>Clearing caches at <?php echo date('Y-m-d H:i:s'); ?></p>
+    <p>Clearing Laravel application caches...</p>
     <hr>
 
 <?php
 
-// Find PHP path
+function logOutput($message, $type = 'info') {
+    $class = $type === 'error' ? 'error' : ($type === 'success' ? 'success' : 'info');
+    echo "<div class='$class'>$message</div>";
+    flush();
+}
+
+// Check if Laravel directory exists
+if (!is_dir($laravelPath)) {
+    logOutput("❌ Laravel directory not found: $laravelPath", 'error');
+    exit;
+}
+
+logOutput("✓ Laravel directory found: $laravelPath", 'success');
+
+// Find PHP executable
 $phpPath = '';
 $phpPaths = [
-    '/opt/cpanel/ea-php82/root/usr/bin/php',  // PHP 8.2
-    '/opt/cpanel/ea-php83/root/usr/bin/php',  // PHP 8.3
+    '/opt/cpanel/ea-php82/root/usr/bin/php',
+    '/opt/cpanel/ea-php81/root/usr/bin/php',
+    '/opt/cpanel/ea-php83/root/usr/bin/php',
     '/usr/local/bin/php',
     '/usr/bin/php',
     'php',
 ];
+
 foreach ($phpPaths as $path) {
     if ($path === 'php' || file_exists($path)) {
         $phpPath = $path;
@@ -84,67 +67,104 @@ foreach ($phpPaths as $path) {
     }
 }
 
-logOutput("Using PHP: $phpPath");
-
-// Check if artisan exists
-if (!file_exists("$laravelPath/artisan")) {
-    logError("Laravel artisan file not found at $laravelPath/artisan");
-    echo "</div></body></html>";
+if (empty($phpPath)) {
+    logOutput("❌ PHP executable not found", 'error');
     exit;
 }
 
-// Clear all caches
-runCommand(
-    "$phpPath artisan cache:clear",
-    "Clearing application cache"
-);
+logOutput("✓ PHP executable found: <code>$phpPath</code>", 'success');
+logOutput("ℹ PHP version: " . shell_exec("$phpPath -v | head -1"), 'info');
 
-runCommand(
-    "$phpPath artisan config:clear",
-    "Clearing configuration cache"
-);
+// Commands to run
+$commands = [
+    'config:clear' => 'Clearing configuration cache',
+    'cache:clear' => 'Clearing application cache',
+    'route:clear' => 'Clearing route cache',
+    'view:clear' => 'Clearing view cache',
+    'optimize:clear' => 'Clearing all optimized caches',
+];
 
-runCommand(
-    "$phpPath artisan route:clear",
-    "Clearing route cache"
-);
+$results = [];
 
-runCommand(
-    "$phpPath artisan view:clear",
-    "Clearing view cache"
-);
+foreach ($commands as $command => $description) {
+    logOutput("🔄 $description...", 'info');
+    
+    $fullCommand = "cd $laravelPath && $phpPath artisan $command 2>&1";
+    $output = [];
+    $returnVar = 0;
+    exec($fullCommand, $output, $returnVar);
+    
+    if ($returnVar === 0) {
+        logOutput("✓ $description completed", 'success');
+        $results[$command] = ['status' => 'success', 'output' => $output];
+    } else {
+        logOutput("❌ $description failed (exit code: $returnVar)", 'error');
+        $results[$command] = ['status' => 'error', 'output' => $output, 'code' => $returnVar];
+    }
+    
+    // Show output if available
+    if (!empty($output)) {
+        $outputText = implode("\n", $output);
+        if (strlen($outputText) < 500) {
+            echo "<pre style='background: #2a2a2a; padding: 10px; margin: 5px 0; font-size: 11px;'>" . htmlspecialchars($outputText) . "</pre>";
+        }
+    }
+}
 
-// Regenerate caches
-runCommand(
-    "$phpPath artisan config:cache",
-    "Caching configuration"
-);
-
-runCommand(
-    "$phpPath artisan route:cache",
-    "Caching routes"
-);
-
-runCommand(
-    "$phpPath artisan view:cache",
-    "Caching views"
-);
-
+// Summary
 echo "<hr>";
-echo "<h2>Cache Clear Summary</h2>";
-echo "<div class='step'>";
-echo "<strong>Completed:</strong><br>";
-echo "✓ All caches cleared and regenerated<br>";
+echo "<h2>📋 Summary</h2>";
+
+$successCount = 0;
+$errorCount = 0;
+
+foreach ($results as $command => $result) {
+    if ($result['status'] === 'success') {
+        $successCount++;
+        echo "<div class='success'>✓ <code>php artisan $command</code> - Success</div>";
+    } else {
+        $errorCount++;
+        echo "<div class='error'>❌ <code>php artisan $command</code> - Failed (exit code: {$result['code']})</div>";
+    }
+}
+
+echo "<div class='info'>";
+echo "<p><strong>Results:</strong> $successCount successful, $errorCount failed</p>";
 echo "</div>";
 
-echo "<div class='step'>";
-echo "<h3>⚠️  SECURITY WARNING:</h3>";
-echo "<p><strong>Delete this file (clear-cache.php) immediately after use!</strong></p>";
-echo "</div>";
+// Check if caches were cleared
+$cachePath = $laravelPath . '/bootstrap/cache';
+if (is_dir($cachePath)) {
+    $cacheFiles = glob($cachePath . '/*.php');
+    $cacheCount = count($cacheFiles);
+    if ($cacheCount > 0) {
+        logOutput("ℹ Remaining cache files: $cacheCount", 'info');
+        echo "<pre style='font-size: 11px;'>";
+        foreach ($cacheFiles as $file) {
+            echo htmlspecialchars(basename($file)) . "\n";
+        }
+        echo "</pre>";
+    } else {
+        logOutput("✓ All cache files cleared", 'success');
+    }
+}
 
 ?>
 
-</div>
+    <hr>
+    <div class="info">
+        <h3>✅ Cache Clear Complete!</h3>
+        <p><strong>Next Steps:</strong></p>
+        <ol>
+            <li>Test your website - changes should now be active</li>
+            <li>If you updated AppServiceProvider, the new MIME type detector should be in effect</li>
+            <li>Test the tour packages page: <a href="/admin/tour-packages" style="color: #4CAF50;">/admin/tour-packages</a></li>
+            <li><strong>Delete this script file for security!</strong></li>
+        </ol>
+    </div>
+
+    <div class="error">
+        <p><strong>⚠ Security Note:</strong> Please delete this file (clear-cache.php) from your server after use!</p>
+    </div>
 </body>
 </html>
-

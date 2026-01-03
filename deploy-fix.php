@@ -109,18 +109,25 @@ if (!$pullSuccess) {
 }
 echo "</div>";
 
-// Step 3: Copy AppServiceProvider
+// Step 3: Copy AppServiceProvider and config files
 echo "<div class='step'>";
-echo "<h2>Step 3: Copying AppServiceProvider</h2>";
+echo "<h2>Step 3: Copying Updated Files</h2>";
 
-$sourceFile = $repoPath . '/app/Providers/AppServiceProvider.php';
-$targetFile = $laravelPath . '/app/Providers/AppServiceProvider.php';
-$targetDir = dirname($targetFile);
+$filesToCopy = [
+    'app/Providers/AppServiceProvider.php' => 'AppServiceProvider with ExtensionMimeTypeDetector and mime_content_type polyfill',
+    'config/media-library.php' => 'Media Library config with conditional image optimizers',
+];
 
-if (!file_exists($sourceFile)) {
-    logOutput("❌ Source file not found: $sourceFile", 'error');
-    logOutput("⚠ Make sure you've committed and pushed AppServiceProvider.php to Git", 'warning');
-} else {
+foreach ($filesToCopy as $file => $description) {
+    $sourceFile = $repoPath . '/' . $file;
+    $targetFile = $laravelPath . '/' . $file;
+    $targetDir = dirname($targetFile);
+    
+    if (!file_exists($sourceFile)) {
+        logOutput("❌ Source file not found: $file", 'error');
+        continue;
+    }
+    
     if (!is_dir($targetDir)) {
         mkdir($targetDir, 0755, true);
     }
@@ -129,22 +136,27 @@ if (!file_exists($sourceFile)) {
     if (file_exists($targetFile)) {
         $backupPath = $targetFile . '.backup.' . date('Y-m-d_H-i-s');
         copy($targetFile, $backupPath);
-        logOutput("✓ Backed up existing file", 'success');
     }
     
     if (copy($sourceFile, $targetFile)) {
         chmod($targetFile, 0644);
-        logOutput("✓ AppServiceProvider.php copied successfully", 'success');
+        logOutput("✓ Copied: $file", 'success');
         
-        // Verify it has the fix
-        $content = file_get_contents($targetFile);
-        if (strpos($content, 'ExtensionMimeTypeDetector') !== false) {
-            logOutput("✓ ExtensionMimeTypeDetector fix detected in file", 'success');
-        } else {
-            logOutput("⚠ ExtensionMimeTypeDetector not found - file may need updating", 'warning');
+        // Verify AppServiceProvider has the fixes
+        if ($file === 'app/Providers/AppServiceProvider.php') {
+            $content = file_get_contents($targetFile);
+            $hasExtensionDetector = strpos($content, 'ExtensionMimeTypeDetector') !== false;
+            $hasPolyfill = strpos($content, 'mime_content_type') !== false;
+            
+            if ($hasExtensionDetector) {
+                logOutput("✓ ExtensionMimeTypeDetector fix detected", 'success');
+            }
+            if ($hasPolyfill) {
+                logOutput("✓ mime_content_type polyfill detected", 'success');
+            }
         }
     } else {
-        logOutput("❌ Failed to copy AppServiceProvider.php", 'error');
+        logOutput("❌ Failed to copy: $file", 'error');
     }
 }
 echo "</div>";
