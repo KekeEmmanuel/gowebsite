@@ -20,4 +20,9 @@ require __DIR__.'/../bootstrap/mime-polyfill.php';
 /** @var Application $app */
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
+// Disable image optimizers if fileinfo is not available (after app is created)
+if (!extension_loaded('fileinfo')) {
+    $app->make('config')->set('media-library.image_optimizers', []);
+}
+
 $app->handleRequest(Request::capture());
