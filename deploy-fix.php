@@ -297,11 +297,58 @@ echo "</div>";
 echo "<div class='info'>";
 echo "<h3>📋 Next Steps:</h3>";
 echo "<ol>";
-echo "<li>Test the tour packages page: <a href='/admin/tour-packages' style='color: #4CAF50;'>/admin/tour-packages</a></li>";
+echo "<li>Test the mime polyfill: <a href='/test-mime-polyfill.php' style='color: #4CAF50;' target='_blank'>Run Test Script</a></li>";
+echo "<li>Test the tour packages page: <a href='/admin/tour-packages' style='color: #4CAF50;' target='_blank'>/admin/tour-packages</a></li>";
 echo "<li>The page should now load without 500 errors</li>";
 echo "<li>Media Library will use extension-based MIME type detection</li>";
 echo "<li><strong>Delete this script file (deploy-fix.php) for security!</strong></li>";
 echo "</ol>";
+echo "</div>";
+
+// Quick inline test
+echo "<div class='step'>";
+echo "<h2>🧪 Quick MIME Polyfill Test</h2>";
+
+// Load polyfill
+$polyfillPath = $laravelPath . '/bootstrap/mime-polyfill.php';
+if (file_exists($polyfillPath)) {
+    require $polyfillPath;
+    logOutput("✓ Polyfill loaded", 'success');
+    
+    // Test global function
+    $testFile = __FILE__;
+    if (function_exists('mime_content_type')) {
+        try {
+            $mime = mime_content_type($testFile);
+            logOutput("✓ Global mime_content_type() works: $mime", 'success');
+        } catch (\Throwable $e) {
+            logOutput("❌ Global mime_content_type() failed: " . $e->getMessage(), 'error');
+        }
+    } else {
+        logOutput("❌ Global mime_content_type() does not exist", 'error');
+    }
+    
+    // Test namespace function
+    try {
+        $namespaceMime = call_user_func('Spatie\ImageOptimizer\mime_content_type', $testFile);
+        logOutput("✓ Namespace mime_content_type() works: $namespaceMime", 'success');
+    } catch (\Throwable $e) {
+        logOutput("❌ Namespace mime_content_type() failed: " . $e->getMessage(), 'error');
+    }
+    
+    // Test Image class
+    try {
+        require_once $laravelPath . '/vendor/autoload.php';
+        $image = new \Spatie\ImageOptimizer\Image($testFile);
+        $imageMime = $image->mime();
+        logOutput("✓ Image class works: $imageMime", 'success');
+    } catch (\Throwable $e) {
+        logOutput("❌ Image class failed: " . $e->getMessage(), 'error');
+    }
+} else {
+    logOutput("❌ Polyfill file not found at: $polyfillPath", 'error');
+}
+
 echo "</div>";
 
 if (!$fileinfoEnabled) {
