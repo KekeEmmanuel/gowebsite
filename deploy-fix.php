@@ -165,9 +165,9 @@ foreach ($filesToCopy as $file => $description) {
 }
 echo "</div>";
 
-// Step 4: Find PHP executable
+// Step 5: Find PHP executable (if not found earlier)
 echo "<div class='step'>";
-echo "<h2>Step 4: Finding PHP Executable</h2>";
+echo "<h2>Step 5: Finding PHP Executable</h2>";
 
 $phpPath = '';
 $phpPaths = [
@@ -197,12 +197,15 @@ $phpVersion = shell_exec("$phpPath -v | head -1");
 logOutput("ℹ $phpVersion", 'info');
 echo "</div>";
 
-// Step 5: Clear all caches
+// Step 6: Clear all caches (CRITICAL - must be done after files are copied)
 echo "<div class='step'>";
-echo "<h2>Step 5: Clearing Laravel Caches</h2>";
+echo "<h2>Step 6: Clearing All Laravel Caches (CRITICAL)</h2>";
 
+logOutput("⚠️ Clearing caches BEFORE config is loaded to ensure optimizers are disabled", 'warning');
+
+// Clear caches in specific order - config cache FIRST
 $cacheCommands = [
-    'config:clear' => 'Clearing configuration cache',
+    'config:clear' => 'Clearing configuration cache (MUST BE FIRST)',
     'cache:clear' => 'Clearing application cache',
     'route:clear' => 'Clearing route cache',
     'view:clear' => 'Clearing view cache',
@@ -216,12 +219,43 @@ foreach ($cacheCommands as $command => $description) {
         $description
     );
     $cacheResults[$command] = $success;
+    
+    // Extra verification for config:clear
+    if ($command === 'config:clear') {
+        $configCachePath = $laravelPath . '/bootstrap/cache/config.php';
+        if (file_exists($configCachePath)) {
+            logOutput("⚠️ WARNING: Config cache file still exists! Attempting to delete...", 'warning');
+            if (unlink($configCachePath)) {
+                logOutput("✓ Config cache file deleted manually", 'success');
+            } else {
+                logOutput("❌ Failed to delete config cache file manually", 'error');
+            }
+        } else {
+            logOutput("✓ Config cache file confirmed deleted", 'success');
+        }
+    }
 }
+
+// Also clear any cached config files
+$cacheFiles = [
+    $laravelPath . '/bootstrap/cache/config.php',
+    $laravelPath . '/bootstrap/cache/routes.php',
+    $laravelPath . '/bootstrap/cache/services.php',
+];
+
+foreach ($cacheFiles as $cacheFile) {
+    if (file_exists($cacheFile)) {
+        if (unlink($cacheFile)) {
+            logOutput("✓ Deleted cached file: " . basename($cacheFile), 'success');
+        }
+    }
+}
+
 echo "</div>";
 
-// Step 6: Verify fileinfo status
+// Step 7: Verify fileinfo status
 echo "<div class='step'>";
-echo "<h2>Step 6: Checking fileinfo Extension Status</h2>";
+echo "<h2>Step 7: Checking fileinfo Extension Status</h2>";
 
 $fileinfoEnabled = extension_loaded('fileinfo');
 if ($fileinfoEnabled) {
