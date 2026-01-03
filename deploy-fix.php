@@ -122,6 +122,16 @@ $filesToCopy = [
     'public/index.php' => 'Updated index.php to load polyfill',
 ];
 
+// Also copy test script to public_html for easy access
+$testScriptSource = $repoPath . '/test-mime-polyfill.php';
+$testScriptTarget = $homeDir . '/public_html/test-mime-polyfill.php';
+if (file_exists($testScriptSource)) {
+    if (copy($testScriptSource, $testScriptTarget)) {
+        chmod($testScriptTarget, 0644);
+        logOutput("✓ Copied test-mime-polyfill.php to public_html", 'success');
+    }
+}
+
 foreach ($filesToCopy as $file => $description) {
     $sourceFile = $repoPath . '/' . $file;
     $targetFile = $laravelPath . '/' . $file;
