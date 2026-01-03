@@ -115,8 +115,10 @@ echo "<h2>Step 3: Copying Updated Files</h2>";
 
 $filesToCopy = [
     'app/Providers/AppServiceProvider.php' => 'AppServiceProvider with ExtensionMimeTypeDetector',
+    'app/Providers/ImageOptimizerServiceProvider.php' => 'ImageOptimizerServiceProvider with namespace polyfill',
     'config/media-library.php' => 'Media Library config with conditional image optimizers',
     'bootstrap/mime-polyfill.php' => 'mime_content_type polyfill for early loading',
+    'bootstrap/providers.php' => 'Updated providers to include ImageOptimizerServiceProvider',
     'public/index.php' => 'Updated index.php to load polyfill',
 ];
 
