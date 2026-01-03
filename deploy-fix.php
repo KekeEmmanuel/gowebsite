@@ -114,8 +114,11 @@ echo "<div class='step'>";
 echo "<h2>Step 3: Copying Updated Files</h2>";
 
 $filesToCopy = [
-    'app/Providers/AppServiceProvider.php' => 'AppServiceProvider with ExtensionMimeTypeDetector',
+    'app/Providers/AppServiceProvider.php' => 'AppServiceProvider with ExtensionMimeTypeDetector and namespace polyfill backup',
     'app/Providers/ImageOptimizerServiceProvider.php' => 'ImageOptimizerServiceProvider with namespace polyfill',
+    'app/Models/TourPackage.php' => 'TourPackage with nonOptimized() conversions',
+    'app/Models/SafariPackage.php' => 'SafariPackage with nonOptimized() conversions',
+    'app/Models/Lodge.php' => 'Lodge with nonOptimized() conversions',
     'config/media-library.php' => 'Media Library config with conditional image optimizers',
     'bootstrap/mime-polyfill.php' => 'mime_content_type polyfill for early loading',
     'bootstrap/providers.php' => 'Updated providers to include ImageOptimizerServiceProvider',
