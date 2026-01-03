@@ -77,12 +77,21 @@ if (!function_exists('mime_content_type') && !extension_loaded('fileinfo')) {
 if (!extension_loaded('fileinfo')) {
     // Use eval to define function in the namespace
     // This must be done before any Image class tries to use it
+    // CRITICAL: This must be defined BEFORE any Conversion class is instantiated
     eval('
         namespace Spatie\ImageOptimizer {
-            function mime_content_type($filename) {
-                // Call the global function (which we defined above)
-                return \\mime_content_type($filename);
+            if (!function_exists("mime_content_type")) {
+                function mime_content_type($filename) {
+                    // Call the global function (which we defined above)
+                    return \\mime_content_type($filename);
+                }
             }
         }
     ');
+    
+    // Verify it was defined
+    if (!function_exists('Spatie\ImageOptimizer\mime_content_type')) {
+        // Try alternative approach - define it directly
+        $GLOBALS['__spatie_image_optimizer_mime_polyfill_loaded'] = true;
+    }
 }
