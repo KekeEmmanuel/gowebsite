@@ -114,8 +114,10 @@ echo "<div class='step'>";
 echo "<h2>Step 3: Copying Updated Files</h2>";
 
 $filesToCopy = [
-    'app/Providers/AppServiceProvider.php' => 'AppServiceProvider with ExtensionMimeTypeDetector and mime_content_type polyfill',
+    'app/Providers/AppServiceProvider.php' => 'AppServiceProvider with ExtensionMimeTypeDetector',
     'config/media-library.php' => 'Media Library config with conditional image optimizers',
+    'bootstrap/mime-polyfill.php' => 'mime_content_type polyfill for early loading',
+    'public/index.php' => 'Updated index.php to load polyfill',
 ];
 
 foreach ($filesToCopy as $file => $description) {
