@@ -135,6 +135,16 @@ if (file_exists($testScriptSource)) {
     }
 }
 
+// Also copy updated deploy script to public_html (so next run uses latest version)
+$deployScriptSource = $repoPath . '/deploy-fix.php';
+$deployScriptTarget = $homeDir . '/public_html/deploy-fix.php';
+if (file_exists($deployScriptSource) && $deployScriptSource !== __FILE__) {
+    if (copy($deployScriptSource, $deployScriptTarget)) {
+        chmod($deployScriptTarget, 0644);
+        logOutput("✓ Updated deploy-fix.php in public_html (refresh page to use new version)", 'success');
+    }
+}
+
 foreach ($filesToCopy as $file => $description) {
     $sourceFile = $repoPath . '/' . $file;
     $targetFile = $laravelPath . '/' . $file;
