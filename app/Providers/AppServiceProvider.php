@@ -69,6 +69,10 @@ class AppServiceProvider extends ServiceProvider
                     $config
                 );
             });
+            
+            // Disable image optimizers completely when fileinfo is not available
+            // This prevents the mime_content_type() error in Spatie Image Optimizer
+            config(['media-library.image_optimizers' => []]);
         }
     }
 }
