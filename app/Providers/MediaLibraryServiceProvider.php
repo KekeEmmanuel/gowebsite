@@ -3,38 +3,43 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Spatie\ImageOptimizer\OptimizerChainFactory;
-use Spatie\ImageOptimizer\OptimizerChain;
+use Spatie\MediaLibrary\Conversions\Conversion;
 
 class MediaLibraryServiceProvider extends ServiceProvider
 {
     /**
      * Register services.
      * 
-     * This provider patches OptimizerChainFactory to return an empty chain
-     * when fileinfo is not available, preventing mime_content_type() errors.
+     * This provider ensures the namespace function exists before any Conversion
+     * class is instantiated, preventing mime_content_type() errors.
      */
     public function register(): void
     {
+        // Ensure namespace function exists BEFORE any Conversion class is loaded
         if (!extension_loaded('fileinfo')) {
-            // Override OptimizerChainFactory::create() to return empty chain
-            // This prevents the Conversion class from trying to use optimizers
-            $this->app->bind(
-                \Spatie\ImageOptimizer\OptimizerChainFactory::class,
-                function ($app) {
-                    return new class extends OptimizerChainFactory {
-                        public static function create(array $config = []): OptimizerChain
-                        {
-                            // If fileinfo is not available, return empty chain
-                            if (!extension_loaded('fileinfo')) {
-                                return new OptimizerChain();
+            // Define the namespace function immediately
+            if (!function_exists('Spatie\ImageOptimizer\mime_content_type')) {
+                eval('
+                    namespace Spatie\ImageOptimizer {
+                        function mime_content_type($filename) {
+                            if (!file_exists($filename)) {
+                                return false;
                             }
-                            // Otherwise use parent implementation
-                            return parent::create($config);
+                            $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                            $mimeTypes = [
+                                "jpg" => "image/jpeg", "jpeg" => "image/jpeg", "png" => "image/png",
+                                "gif" => "image/gif", "webp" => "image/webp", "svg" => "image/svg+xml",
+                                "bmp" => "image/bmp", "ico" => "image/x-icon", "tiff" => "image/tiff",
+                                "tif" => "image/tiff", "avif" => "image/avif", "pdf" => "application/pdf",
+                            ];
+                            return $mimeTypes[$extension] ?? "application/octet-stream";
                         }
-                    };
-                }
-            );
+                    }
+                ');
+            }
+            
+            // Disable optimizers in config
+            config(['media-library.image_optimizers' => []]);
         }
     }
 
@@ -43,7 +48,26 @@ class MediaLibraryServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Ensure namespace function exists in boot() as well (for queued jobs)
+        if (!extension_loaded('fileinfo') && !function_exists('Spatie\ImageOptimizer\mime_content_type')) {
+            eval('
+                namespace Spatie\ImageOptimizer {
+                    function mime_content_type($filename) {
+                        if (!file_exists($filename)) {
+                            return false;
+                        }
+                        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                        $mimeTypes = [
+                            "jpg" => "image/jpeg", "jpeg" => "image/jpeg", "png" => "image/png",
+                            "gif" => "image/gif", "webp" => "image/webp", "svg" => "image/svg+xml",
+                            "bmp" => "image/bmp", "ico" => "image/x-icon", "tiff" => "image/tiff",
+                            "tif" => "image/tiff", "avif" => "image/avif", "pdf" => "application/pdf",
+                        ];
+                        return $mimeTypes[$extension] ?? "application/octet-stream";
+                    }
+                }
+            ');
+        }
     }
 }
 
