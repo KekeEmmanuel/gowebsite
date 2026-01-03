@@ -36,19 +36,32 @@ echo "</div>";
 
 echo "<div class='info'>";
 echo "<h2>Step 2: Load polyfill</h2>";
-$polyfillPath = __DIR__ . '/bootstrap/mime-polyfill.php';
+$homeDir = '/home/gotzsafari';
+$laravelPath = $homeDir . '/laravel';
+$polyfillPath = $laravelPath . '/bootstrap/mime-polyfill.php';
+
 if (file_exists($polyfillPath)) {
     require $polyfillPath;
     echo "<p style='color: #4CAF50;'>✓ Polyfill loaded from: $polyfillPath</p>";
 } else {
     echo "<p style='color: #f44336;'>❌ Polyfill not found at: $polyfillPath</p>";
-    echo "<p>Trying alternative path...</p>";
-    $altPath = dirname(__DIR__) . '/laravel/bootstrap/mime-polyfill.php';
-    if (file_exists($altPath)) {
-        require $altPath;
-        echo "<p style='color: #4CAF50;'>✓ Polyfill loaded from: $altPath</p>";
-    } else {
-        echo "<p style='color: #f44336;'>❌ Polyfill not found at alternative path either</p>";
+    // Try alternative paths
+    $altPaths = [
+        __DIR__ . '/bootstrap/mime-polyfill.php',
+        dirname(__DIR__) . '/laravel/bootstrap/mime-polyfill.php',
+        $homeDir . '/repositories/gowebsitelaravel/bootstrap/mime-polyfill.php',
+    ];
+    $loaded = false;
+    foreach ($altPaths as $altPath) {
+        if (file_exists($altPath)) {
+            require $altPath;
+            echo "<p style='color: #4CAF50;'>✓ Polyfill loaded from: $altPath</p>";
+            $loaded = true;
+            break;
+        }
+    }
+    if (!$loaded) {
+        echo "<p style='color: #f44336;'>❌ Polyfill not found in any expected location</p>";
     }
 }
 echo "</div>";
@@ -98,7 +111,15 @@ echo "<div class='info'>";
 echo "<h2>Step 5: Test Image class instantiation</h2>";
 try {
     // Try to create an Image object (this is what fails in production)
-    require_once __DIR__ . '/vendor/autoload.php';
+    $homeDir = '/home/gotzsafari';
+    $laravelPath = $homeDir . '/laravel';
+    $autoloadPath = $laravelPath . '/vendor/autoload.php';
+    
+    if (!file_exists($autoloadPath)) {
+        throw new \Exception("Autoload file not found at: $autoloadPath");
+    }
+    
+    require_once $autoloadPath;
     
     $imagePath = __FILE__;
     $image = new \Spatie\ImageOptimizer\Image($imagePath);
@@ -121,8 +142,20 @@ echo "</div>";
 echo "<div class='info'>";
 echo "<h2>Step 6: Check if ImageOptimizerServiceProvider is registered</h2>";
 try {
-    require_once __DIR__ . '/vendor/autoload.php';
-    $app = require_once __DIR__ . '/bootstrap/app.php';
+    $homeDir = '/home/gotzsafari';
+    $laravelPath = $homeDir . '/laravel';
+    $autoloadPath = $laravelPath . '/vendor/autoload.php';
+    $appPath = $laravelPath . '/bootstrap/app.php';
+    
+    if (!file_exists($autoloadPath)) {
+        throw new \Exception("Autoload file not found at: $autoloadPath");
+    }
+    if (!file_exists($appPath)) {
+        throw new \Exception("App file not found at: $appPath");
+    }
+    
+    require_once $autoloadPath;
+    $app = require_once $appPath;
     $providers = $app->getLoadedProviders();
     $imageOptimizerProvider = 'App\Providers\ImageOptimizerServiceProvider';
     if (isset($providers[$imageOptimizerProvider])) {
