@@ -28,33 +28,18 @@ class TourPackageResource extends JsonResource
                     : $heroUrl;
                 
                 // Convert absolute URLs to relative if they contain localhost
-                $makeRelative = function ($url) use ($fallback, $media) {
+                $makeRelative = function ($url) use ($fallback) {
                     if (empty($url)) return $fallback;
                     // If URL contains localhost or is absolute, extract the path
                     if (strpos($url, 'localhost') !== false || strpos($url, 'http') === 0) {
                         $parsed = parse_url($url);
                         $path = $parsed['path'] ?? $fallback;
                         // Ensure path starts with /
-                        $path = (strpos($path, '/') === 0) ? $path : '/' . $path;
-                        // Verify file exists in public storage
-                        if ($media && strpos($path, '/storage/') === 0) {
-                            $publicPath = public_path($path);
-                            if (!file_exists($publicPath)) {
-                                return $fallback;
-                            }
-                        }
-                        return $path;
+                        return (strpos($path, '/') === 0) ? $path : '/' . $path;
                     }
                     // Ensure relative URLs start with /
                     if (strpos($url, '/') !== 0) {
                         return '/' . $url;
-                    }
-                    // Verify file exists for storage paths
-                    if ($media && strpos($url, '/storage/') === 0) {
-                        $publicPath = public_path($url);
-                        if (!file_exists($publicPath)) {
-                            return $fallback;
-                        }
                     }
                     return $url ?: $fallback;
                 };
@@ -121,22 +106,11 @@ class TourPackageResource extends JsonResource
                             ? $media->getUrl('cover') 
                             : $url;
                         
-                        // Helper to check file existence
-                        $checkAndMakeRelative = function ($url) use ($makeRelative, $fallback, $media) {
-                            $relative = $makeRelative($url);
-                            // If it's a storage path, verify it exists
-                            if (strpos($relative, '/storage/') === 0) {
-                                $publicPath = public_path($relative);
-                                return file_exists($publicPath) ? $relative : $fallback;
-                            }
-                            return $relative;
-                        };
-                        
                         return [
                             'id' => $media->id,
-                            'url' => $checkAndMakeRelative($url),
-                            'thumb' => $checkAndMakeRelative($thumbUrl),
-                            'cover' => $checkAndMakeRelative($coverUrl),
+                            'url' => $makeRelative($url),
+                            'thumb' => $makeRelative($thumbUrl),
+                            'cover' => $makeRelative($coverUrl),
                             'name' => $media->name,
                             'alt' => $media->getCustomProperty('alt'),
                         ];
