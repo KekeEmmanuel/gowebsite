@@ -1,210 +1,126 @@
 <?php
 /**
- * Fix File Permissions
+ * Fix File Permissions and Revert .htaccess
  * Upload to public_html and run: https://www.gotzsafari.com/fix-permissions.php
- * This script will fix file and directory permissions
  */
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 $publicHtmlPath = '/home/gotzsafari/public_html';
-$laravelPath = '/home/gotzsafari/laravel';
+$htaccessPath = $publicHtmlPath . '/.htaccess';
 
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Fix File Permissions</title>
+    <title>Fix Permissions & Revert .htaccess</title>
     <style>
-        body { font-family: Arial; max-width: 900px; margin: 50px auto; padding: 20px; background: #1a1a1a; color: #fff; }
-        .success { color: #4CAF50; padding: 10px; background: #2a2a2a; margin: 5px 0; border-left: 4px solid #4CAF50; }
-        .error { color: #f44336; padding: 10px; background: #2a2a2a; margin: 5px 0; border-left: 4px solid #f44336; }
-        .info { color: #2196F3; padding: 10px; background: #2a2a2a; margin: 5px 0; border-left: 4px solid #2196F3; }
-        .warning { color: #FF9800; padding: 10px; background: #2a2a2a; margin: 5px 0; border-left: 4px solid #FF9800; }
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; background: #1a1a1a; color: #fff; }
+        .success { color: #4CAF50; padding: 10px; background: #2a2a2a; margin: 5px 0; }
+        .error { color: #f44336; padding: 10px; background: #2a2a2a; margin: 5px 0; }
+        .info { color: #2196F3; padding: 10px; background: #2a2a2a; margin: 5px 0; }
+        .warning { color: #FF9800; padding: 10px; background: #2a2a2a; margin: 5px 0; }
         h1 { color: #4CAF50; }
-        pre { background: #000; padding: 10px; overflow-x: auto; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #444; }
-        th { background: #2a2a2a; }
+        pre { background: #000; padding: 10px; overflow-x: auto; }
     </style>
 </head>
 <body>
-    <h1>🔧 Fix File Permissions</h1>
+    <h1>🔧 Fix Permissions & Revert .htaccess</h1>
 
 <?php
-echo "<div class='info'><strong>Current PHP Version:</strong> " . phpversion() . "</div>";
-echo "<div class='info'><strong>Current User:</strong> " . get_current_user() . "</div>";
-echo "<div class='info'><strong>Current Working Directory:</strong> " . getcwd() . "</div>";
+// Step 1: Revert .htaccess to simple version
+echo "<div class='info'><strong>Step 1:</strong> Reverting .htaccess to simple version</div>";
 
-// Function to get file permissions in readable format
-function getPerms($file) {
-    if (!file_exists($file)) return 'N/A';
-    $perms = fileperms($file);
-    return substr(sprintf('%o', $perms), -4);
-}
+$simpleHtaccess = '<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
 
-// Function to set permissions
-function setPerms($file, $perms) {
-    if (!file_exists($file)) {
-        return ['success' => false, 'message' => 'File does not exist'];
-    }
-    if (chmod($file, $perms)) {
-        return ['success' => true, 'message' => 'Permissions updated'];
-    } else {
-        return ['success' => false, 'message' => 'Failed to update permissions'];
-    }
-}
+    RewriteEngine On
 
-// Check and fix public_html permissions
-echo "<h2>📁 Checking public_html Permissions</h2>";
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-$publicHtmlFiles = [
-    'index.php',
-    '.htaccess',
-    '.user.ini',
-    'fix-php-version-conflict.php',
-    'fix-permissions.php',
-];
+    # Handle X-XSRF-Token Header
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
-echo "<table>";
-echo "<tr><th>File</th><th>Current Permissions</th><th>Status</th><th>Action</th></tr>";
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
 
-foreach ($publicHtmlFiles as $file) {
-    $fullPath = $publicHtmlPath . '/' . $file;
-    $exists = file_exists($fullPath);
-    $currentPerms = $exists ? getPerms($fullPath) : 'N/A';
-    
-    if ($exists) {
-        // Files should be 644 (rw-r--r--)
-        $targetPerms = 0644;
-        $targetPermsStr = '0644';
-        
-        if ($currentPerms !== $targetPermsStr) {
-            $result = setPerms($fullPath, $targetPerms);
-            if ($result['success']) {
-                echo "<tr><td>$file</td><td>$currentPerms</td><td style='color: #4CAF50;'>✓ Fixed</td><td>Changed to $targetPermsStr</td></tr>";
-            } else {
-                echo "<tr><td>$file</td><td>$currentPerms</td><td style='color: #f44336;'>✗ Error</td><td>{$result['message']}</td></tr>";
-            }
-        } else {
-            echo "<tr><td>$file</td><td>$currentPerms</td><td style='color: #4CAF50;'>✓ OK</td><td>No change needed</td></tr>";
-        }
-    } else {
-        echo "<tr><td>$file</td><td>N/A</td><td style='color: #FF9800;'>⚠ Not Found</td><td>-</td></tr>";
-    }
-}
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>';
 
-echo "</table>";
-
-// Check directory permissions
-echo "<h2>📂 Checking Directory Permissions</h2>";
-
-$directories = [
-    $publicHtmlPath => 'public_html',
-    $publicHtmlPath . '/storage' => 'public_html/storage',
-    $laravelPath => 'laravel',
-    $laravelPath . '/storage' => 'laravel/storage',
-    $laravelPath . '/storage/app' => 'laravel/storage/app',
-    $laravelPath . '/storage/app/public' => 'laravel/storage/app/public',
-    $laravelPath . '/bootstrap/cache' => 'laravel/bootstrap/cache',
-];
-
-echo "<table>";
-echo "<tr><th>Directory</th><th>Current Permissions</th><th>Status</th><th>Action</th></tr>";
-
-foreach ($directories as $dirPath => $dirName) {
-    $exists = is_dir($dirPath);
-    $currentPerms = $exists ? getPerms($dirPath) : 'N/A';
-    
-    if ($exists) {
-        // Directories should be 755 (rwxr-xr-x)
-        $targetPerms = 0755;
-        $targetPermsStr = '0755';
-        
-        if ($currentPerms !== $targetPermsStr) {
-            $result = setPerms($dirPath, $targetPerms);
-            if ($result['success']) {
-                echo "<tr><td>$dirName</td><td>$currentPerms</td><td style='color: #4CAF50;'>✓ Fixed</td><td>Changed to $targetPermsStr</td></tr>";
-            } else {
-                echo "<tr><td>$dirName</td><td>$currentPerms</td><td style='color: #f44336;'>✗ Error</td><td>{$result['message']}</td></tr>";
-            }
-        } else {
-            echo "<tr><td>$dirName</td><td>$currentPerms</td><td style='color: #4CAF50;'>✓ OK</td><td>No change needed</td></tr>";
-        }
-    } else {
-        echo "<tr><td>$dirName</td><td>N/A</td><td style='color: #FF9800;'>⚠ Not Found</td><td>-</td></tr>";
-    }
-}
-
-echo "</table>";
-
-// Check if fix-php-version-conflict.php exists and is accessible
-echo "<h2>🔍 Checking fix-php-version-conflict.php</h2>";
-
-$fixScript = $publicHtmlPath . '/fix-php-version-conflict.php';
-if (file_exists($fixScript)) {
-    $perms = getPerms($fixScript);
-    $readable = is_readable($fixScript);
-    
-    echo "<div class='success'>✓ File exists: $fixScript</div>";
-    echo "<div class='info'>Current permissions: $perms</div>";
-    echo "<div class='" . ($readable ? 'success' : 'error') . "'>" . ($readable ? '✓' : '✗') . " File is " . ($readable ? 'readable' : 'NOT readable') . "</div>";
-    
-    if (!$readable || $perms !== '0644') {
-        echo "<div class='info'>Attempting to fix permissions...</div>";
-        if (chmod($fixScript, 0644)) {
-            echo "<div class='success'>✓ Permissions fixed! Try accessing the file again.</div>";
-        } else {
-            echo "<div class='error'>✗ Failed to fix permissions. You may need to fix this via cPanel File Manager.</div>";
-        }
-    }
-} else {
-    echo "<div class='warning'>⚠ File not found: $fixScript</div>";
-    echo "<div class='info'>You need to upload fix-php-version-conflict.php to public_html first.</div>";
-}
-
-// Check .htaccess for any restrictions
-echo "<h2>📄 Checking .htaccess</h2>";
-
-$htaccessPath = $publicHtmlPath . '/.htaccess';
+// Backup current .htaccess
 if (file_exists($htaccessPath)) {
-    $htaccessContent = file_get_contents($htaccessPath);
-    
-    // Check for any deny rules that might block PHP files
-    if (preg_match('/deny.*\.php/i', $htaccessContent)) {
-        echo "<div class='warning'>⚠ .htaccess contains rules that might deny PHP files</div>";
-        echo "<pre>" . htmlspecialchars($htaccessContent) . "</pre>";
-    } else {
-        echo "<div class='success'>✓ .htaccess doesn't appear to block PHP files</div>";
-    }
-} else {
-    echo "<div class='warning'>⚠ .htaccess not found</div>";
+    $backupPath = $htaccessPath . '.backup.' . date('Y-m-d_H-i-s');
+    copy($htaccessPath, $backupPath);
+    echo "<div class='success'>✓ Backup created: " . basename($backupPath) . "</div>";
 }
 
-// Summary
-echo "<hr>";
-echo "<h2>✅ Summary</h2>";
-echo "<div class='info'>";
-echo "<p><strong>What was checked:</strong></p>";
-echo "<ul>";
-echo "<li>File permissions in public_html</li>";
-echo "<li>Directory permissions</li>";
-echo "<li>Accessibility of fix-php-version-conflict.php</li>";
-echo "<li>.htaccess restrictions</li>";
-echo "</ul>";
-echo "</div>";
+// Write simple .htaccess
+if (file_put_contents($htaccessPath, $simpleHtaccess)) {
+    echo "<div class='success'>✓ .htaccess reverted to simple version</div>";
+} else {
+    echo "<div class='error'>❌ Failed to write .htaccess</div>";
+}
 
-echo "<div class='success'>";
-echo "<p><strong>Next Steps:</strong></p>";
-echo "<ol>";
-echo "<li>If permissions were fixed, try accessing <a href='/fix-php-version-conflict.php' style='color: #4CAF50;'>fix-php-version-conflict.php</a> again</li>";
-echo "<li>If you still get 403, check cPanel File Manager → Right-click file → Change Permissions → Set to 644</li>";
-echo "<li>Make sure the file is in the correct location: <code>/home/gotzsafari/public_html/fix-php-version-conflict.php</code></li>";
-echo "</ol>";
-echo "</div>";
+// Step 2: Fix file permissions
+echo "<div class='info'><strong>Step 2:</strong> Fixing file permissions</div>";
 
-echo "<div class='warning'>⚠ <strong>Security:</strong> Delete this script (fix-permissions.php) after use!</div>";
+$filesToFix = [
+    $htaccessPath,
+    $publicHtmlPath . '/index.php',
+    $publicHtmlPath . '/.user.ini',
+];
+
+foreach ($filesToFix as $file) {
+    if (file_exists($file)) {
+        if (chmod($file, 0644)) {
+            echo "<div class='success'>✓ Fixed permissions: " . basename($file) . " (644)</div>";
+        } else {
+            echo "<div class='error'>❌ Failed to fix permissions: " . basename($file) . "</div>";
+        }
+    }
+}
+
+// Fix directory permissions
+if (is_dir($publicHtmlPath)) {
+    if (chmod($publicHtmlPath, 0755)) {
+        echo "<div class='success'>✓ Fixed directory permissions: public_html (755)</div>";
+    } else {
+        echo "<div class='error'>❌ Failed to fix directory permissions</div>";
+    }
+}
+
+// Step 3: Check Laravel directory permissions
+$laravelPath = '/home/gotzsafari/laravel';
+if (is_dir($laravelPath)) {
+    echo "<div class='info'><strong>Step 3:</strong> Checking Laravel directory permissions</div>";
+    
+    $laravelDirs = [
+        $laravelPath . '/storage',
+        $laravelPath . '/bootstrap/cache',
+    ];
+    
+    foreach ($laravelDirs as $dir) {
+        if (is_dir($dir)) {
+            if (chmod($dir, 0755)) {
+                echo "<div class='success'>✓ Fixed permissions: " . basename($dir) . " (755)</div>";
+            }
+        }
+    }
+}
+
+echo "<div class='success'><strong>✅ Done! Try accessing your site now.</strong></div>";
+echo "<div class='warning'>⚠️ <strong>Note:</strong> PHP version will be handled by cPanel settings. Check cPanel → Select PHP Version to ensure PHP 8.2 is selected.</div>";
 ?>
 
 </body>
